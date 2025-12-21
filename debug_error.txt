@@ -1,0 +1,489 @@
+{
+    "message": "SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed: card_installments.transaction_id, card_installments.installment_number (Connection: sqlite, SQL: insert into \"card_installments\" (\"transaction_id\", \"card_invoice_id\", \"installment_number\", \"total_installments\", \"value\", \"due_date\", \"status\", \"updated_at\", \"created_at\") values (1, 2, 1, 1, 50, 2025-02-20 00:00:00, em_fatura, 2025-01-05 00:00:00, 2025-01-05 00:00:00))",
+    "exception": "Illuminate\\Database\\UniqueConstraintViolationException",
+    "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php",
+    "line": 820,
+    "trace": [
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php",
+            "line": 779,
+            "function": "runQueryCallback",
+            "class": "Illuminate\\Database\\Connection",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php",
+            "line": 560,
+            "function": "run",
+            "class": "Illuminate\\Database\\Connection",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php",
+            "line": 524,
+            "function": "statement",
+            "class": "Illuminate\\Database\\Connection",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Processors\\Processor.php",
+            "line": 32,
+            "function": "insert",
+            "class": "Illuminate\\Database\\Connection",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php",
+            "line": 3766,
+            "function": "processInsertGetId",
+            "class": "Illuminate\\Database\\Query\\Processors\\Processor",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php",
+            "line": 2120,
+            "function": "insertGetId",
+            "class": "Illuminate\\Database\\Query\\Builder",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php",
+            "line": 1359,
+            "function": "__call",
+            "class": "Illuminate\\Database\\Eloquent\\Builder",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php",
+            "line": 1324,
+            "function": "insertAndSetId",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php",
+            "line": 1163,
+            "function": "performInsert",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php",
+            "line": 1128,
+            "function": "save",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\helpers.php",
+            "line": 399,
+            "function": "Illuminate\\Database\\Eloquent\\{closure}",
+            "class": "Illuminate\\Database\\Eloquent\\Builder",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php",
+            "line": 1127,
+            "function": "tap"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Traits\\ForwardsCalls.php",
+            "line": 23,
+            "function": "create",
+            "class": "Illuminate\\Database\\Eloquent\\Builder",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php",
+            "line": 2372,
+            "function": "forwardCallTo",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php",
+            "line": 2384,
+            "function": "__call",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\app\\Services\\InstallmentService.php",
+            "line": 65,
+            "function": "__callStatic",
+            "class": "Illuminate\\Database\\Eloquent\\Model",
+            "type": "::"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\app\\Services\\TransactionService.php",
+            "line": 164,
+            "function": "createInstallments",
+            "class": "App\\Services\\InstallmentService",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php",
+            "line": 32,
+            "function": "App\\Services\\{closure}",
+            "class": "App\\Services\\TransactionService",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php",
+            "line": 495,
+            "function": "transaction",
+            "class": "Illuminate\\Database\\Connection",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Facades\\Facade.php",
+            "line": 361,
+            "function": "__call",
+            "class": "Illuminate\\Database\\DatabaseManager",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\app\\Services\\TransactionService.php",
+            "line": 140,
+            "function": "__callStatic",
+            "class": "Illuminate\\Support\\Facades\\Facade",
+            "type": "::"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\app\\Http\\Controllers\\Api\\TransactionController.php",
+            "line": 231,
+            "function": "updateTransaction",
+            "class": "App\\Services\\TransactionService",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php",
+            "line": 47,
+            "function": "update",
+            "class": "App\\Http\\Controllers\\Api\\TransactionController",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php",
+            "line": 266,
+            "function": "dispatch",
+            "class": "Illuminate\\Routing\\ControllerDispatcher",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php",
+            "line": 212,
+            "function": "runController",
+            "class": "Illuminate\\Routing\\Route",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+            "line": 808,
+            "function": "run",
+            "class": "Illuminate\\Routing\\Route",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 170,
+            "function": "Illuminate\\Routing\\{closure}",
+            "class": "Illuminate\\Routing\\Router",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\SubstituteBindings.php",
+            "line": 51,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Routing\\Middleware\\SubstituteBindings",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php",
+            "line": 64,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Auth\\Middleware\\Authenticate",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 127,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+            "line": 807,
+            "function": "then",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+            "line": 786,
+            "function": "runRouteWithinStack",
+            "class": "Illuminate\\Routing\\Router",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+            "line": 750,
+            "function": "runRoute",
+            "class": "Illuminate\\Routing\\Router",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+            "line": 739,
+            "function": "dispatchToRoute",
+            "class": "Illuminate\\Routing\\Router",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+            "line": 201,
+            "function": "dispatch",
+            "class": "Illuminate\\Routing\\Router",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 170,
+            "function": "Illuminate\\Foundation\\Http\\{closure}",
+            "class": "Illuminate\\Foundation\\Http\\Kernel",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php",
+            "line": 21,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull.php",
+            "line": 31,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php",
+            "line": 21,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TrimStrings.php",
+            "line": 51,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\TrimStrings",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\ValidatePostSize.php",
+            "line": 27,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Http\\Middleware\\ValidatePostSize",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance.php",
+            "line": 110,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\HandleCors.php",
+            "line": 62,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Http\\Middleware\\HandleCors",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\TrustProxies.php",
+            "line": 58,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Http\\Middleware\\TrustProxies",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks.php",
+            "line": 22,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 209,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+            "line": 127,
+            "function": "Illuminate\\Pipeline\\{closure}",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+            "line": 176,
+            "function": "then",
+            "class": "Illuminate\\Pipeline\\Pipeline",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+            "line": 145,
+            "function": "sendRequestThroughRouter",
+            "class": "Illuminate\\Foundation\\Http\\Kernel",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Testing\\Concerns\\MakesHttpRequests.php",
+            "line": 607,
+            "function": "handle",
+            "class": "Illuminate\\Foundation\\Http\\Kernel",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Testing\\Concerns\\MakesHttpRequests.php",
+            "line": 573,
+            "function": "call",
+            "class": "Illuminate\\Foundation\\Testing\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Testing\\Concerns\\MakesHttpRequests.php",
+            "line": 441,
+            "function": "json",
+            "class": "Illuminate\\Foundation\\Testing\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\tests\\Feature\\EditTransactionTest.php",
+            "line": 137,
+            "function": "putJson",
+            "class": "Illuminate\\Foundation\\Testing\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\Framework\\TestCase.php",
+            "line": 1548,
+            "function": "test_critical_edit_on_paid_invoice_creates_adjustment",
+            "class": "Tests\\Feature\\EditTransactionTest",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\Framework\\TestCase.php",
+            "line": 686,
+            "function": "runTest",
+            "class": "PHPUnit\\Framework\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\Framework\\TestRunner.php",
+            "line": 106,
+            "function": "runBare",
+            "class": "PHPUnit\\Framework\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\Framework\\TestCase.php",
+            "line": 516,
+            "function": "run",
+            "class": "PHPUnit\\Framework\\TestRunner",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\Framework\\TestSuite.php",
+            "line": 374,
+            "function": "run",
+            "class": "PHPUnit\\Framework\\TestCase",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\TextUI\\TestRunner.php",
+            "line": 64,
+            "function": "run",
+            "class": "PHPUnit\\Framework\\TestSuite",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\src\\TextUI\\Application.php",
+            "line": 204,
+            "function": "run",
+            "class": "PHPUnit\\TextUI\\TestRunner",
+            "type": "->"
+        },
+        {
+            "file": "C:\\Users\\Fred\\.gemini\\antigravity\\scratch\\projeto-financa\\vendor\\phpunit\\phpunit\\phpunit",
+            "line": 104,
+            "function": "run",
+            "class": "PHPUnit\\TextUI\\Application",
+            "type": "->"
+        }
+    ]
+}
