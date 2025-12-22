@@ -202,12 +202,41 @@
                     <!-- Installments for credit -->
                     <div v-if="form.payment_method === 'credito' && form.card_id">
                         <label class="label">Parcelamento</label>
-                        <select v-model="form.installments" class="input">
+                        <select v-model="form.installments" class="input" @change="form.current_installment = 1">
                             <option :value="1">À vista</option>
                             <option v-for="n in 23" :key="n + 1" :value="n + 1">{{ n + 1 }}x de {{ formatCurrency((form.value || 0) / (n + 1)) }}</option>
                         </select>
                         
-                        <div v-if="form.installments > 1" class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <!-- Parcelamento em andamento (somente para criação) -->
+                        <div v-if="form.installments > 1 && !isEditing" class="mt-4">
+                            <label class="label flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Parcelamento já em andamento?
+                            </label>
+                            <p class="text-xs text-gray-500 mb-2">
+                                Se você está cadastrando uma compra que já começou a pagar, informe qual é a parcela atual.
+                            </p>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Estou pagando a parcela</span>
+                                <select v-model="form.current_installment" class="input w-20 text-center">
+                                    <option v-for="n in form.installments" :key="n" :value="n">{{ n }}</option>
+                                </select>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">de {{ form.installments }}</span>
+                            </div>
+                            
+                            <div v-if="form.current_installment > 1" class="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                <p class="text-sm text-purple-800 dark:text-purple-200">
+                                    <strong>Parcelas anteriores ({{ form.current_installment - 1 }}):</strong> Não serão criadas (consideradas históricas)
+                                </p>
+                                <p class="text-sm text-purple-800 dark:text-purple-200 mt-1">
+                                    <strong>Parcelas a criar ({{ form.installments - form.current_installment + 1 }}):</strong> Da {{ form.current_installment }}ª até a {{ form.installments }}ª
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div v-if="form.installments > 1 && form.current_installment === 1" class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                             <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
                                 Preview das parcelas:
                             </p>
@@ -314,6 +343,7 @@ const form = reactive({
     category_id: '',
     payment_method: 'dinheiro',
     installments: 1,
+    current_installment: 1, // Para parcelamentos em andamento
     notes: '',
 });
 

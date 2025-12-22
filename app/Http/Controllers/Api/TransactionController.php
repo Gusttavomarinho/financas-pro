@@ -96,6 +96,7 @@ class TransactionController extends Controller
             'category_id' => ['nullable', 'exists:categories,id'],
             'payment_method' => ['nullable', 'in:dinheiro,debito,credito,pix,boleto,transferencia'],
             'installments' => ['nullable', 'integer', 'min:1', 'max:48'],
+            'current_installment' => ['nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string'],
         ], [
             'type.required' => 'O tipo é obrigatório.',
@@ -108,6 +109,14 @@ class TransactionController extends Controller
 
         $userId = $request->user()->id;
         $installments = $validated['installments'] ?? 1;
+        $currentInstallment = $validated['current_installment'] ?? 1;
+
+        // Validar que current_installment não exceda total de parcelas
+        if ($currentInstallment > $installments) {
+            return response()->json([
+                'message' => 'A parcela atual não pode ser maior que o total de parcelas.',
+            ], 422);
+        }
 
         // Compra no crédito (parcelada ou à vista)
         if ($validated['payment_method'] === 'credito' && $validated['card_id']) {
@@ -123,16 +132,20 @@ class TransactionController extends Controller
             $transaction = $this->transactionService->createCreditPurchase(
                 [...$validated, 'user_id' => $userId],
                 $card,
-                $installments
+                $installments,
+                $currentInstallment
             );
 
             AuditLog::log('create_credit_purchase', 'Transaction', $transaction->id, [
                 'installments' => $installments,
+                'current_installment' => $currentInstallment,
                 'value' => $validated['value'],
             ]);
 
             $message = $installments > 1
-                ? "Compra parcelada em {$installments}x criada com sucesso!"
+                ? ($currentInstallment > 1
+                    ? "Compra parcelada ({$currentInstallment}ª a {$installments}ª parcela) registrada!"
+                    : "Compra parcelada em {$installments}x criada com sucesso!")
                 : 'Compra no crédito criada com sucesso!';
 
             return response()->json([

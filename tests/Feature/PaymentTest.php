@@ -61,6 +61,7 @@ class PaymentTest extends TestCase
         // Pay 500
         $response = $this->postJson("/api/cards/{$card->id}/pay", [
             'account_id' => $account->id,
+            'invoice_id' => $invoice->id,
             'amount' => 500.00
         ]);
 
@@ -108,6 +109,7 @@ class PaymentTest extends TestCase
         // Pay 200.00
         $response = $this->postJson("/api/cards/{$card->id}/pay", [
             'account_id' => $account->id,
+            'invoice_id' => $invoice->id,
             'amount' => 200.00
         ]);
 

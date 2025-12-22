@@ -90,6 +90,7 @@ class RegressionTest extends TestCase
 
         $response = $this->postJson("/api/cards/{$cardId}/pay", [
             'account_id' => $account->id,
+            'invoice_id' => $invoice->id,
             'amount' => 50.00
         ]);
         $response->assertStatus(200);

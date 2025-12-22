@@ -25,8 +25,15 @@ class InstallmentService
      * - Data base é SEMPRE a data da compra
      * - Primeira parcela vai para a fatura em que a compra se encaixa
      * - Parcelas subsequentes vão para as faturas seguintes
+     * 
+     * PARCELAMENTO EM ANDAMENTO:
+     * - Se startingInstallment > 1, considera parcelas anteriores como "históricas"
+     * - Nunca cria parcelas retroativas
+     * - Parcela inicial (startingInstallment) vai para a fatura atual
+     * 
+     * @param int $startingInstallment Número da primeira parcela a criar (default: 1)
      */
-    public function createInstallments(Transaction $transaction): void
+    public function createInstallments(Transaction $transaction, int $startingInstallment = 1): void
     {
         // workaround for mysterious BadMethodCall on relation in tests
         $card = \App\Models\Card::find($transaction->card_id);
@@ -43,19 +50,23 @@ class InstallmentService
         // Ajustar valor da última parcela para evitar diferença de centavos
         $lastInstallmentValue = $transaction->value - ($installmentValue * ($totalInstallments - 1));
 
-        // Descobrir em qual fatura a primeira parcela entra
+        // Descobrir em qual fatura a primeira parcela (startingInstallment) entra
         $firstInvoice = $this->invoiceService->getOrCreateInvoice($card, $purchaseDate);
 
-        // Criar cada parcela
-        for ($i = 1; $i <= $totalInstallments; $i++) {
+        // Criar apenas as parcelas a partir de startingInstallment
+        // Parcelas anteriores são consideradas "históricas" (não criadas)
+        for ($i = $startingInstallment; $i <= $totalInstallments; $i++) {
             // Calcular a fatura desta parcela
-            if ($i === 1) {
+            // A parcela startingInstallment vai para a fatura atual
+            // Parcelas seguintes vão para faturas futuras
+            $monthOffset = $i - $startingInstallment; // 0 para a primeira parcela a criar
+
+            if ($monthOffset === 0) {
                 $invoice = $firstInvoice;
             } else {
                 // Parcelas seguintes vão para faturas dos meses seguintes
-                // Usa referência direta para evitar skips de mês por conta de datas de fechamento
                 $nextReferenceMonth = Carbon::parse($firstInvoice->reference_month . '-01')
-                    ->addMonths($i - 1)
+                    ->addMonths($monthOffset)
                     ->format('Y-m');
 
                 $invoice = $this->invoiceService->getOrCreateInvoiceByReferenceMonth($card, $nextReferenceMonth);
@@ -64,11 +75,11 @@ class InstallmentService
             // Valor da parcela
             $value = ($i === $totalInstallments) ? $lastInstallmentValue : $installmentValue;
 
-            // Criar a parcela
+            // Criar a parcela com o número correto (i, não resetado)
             CardInstallment::create([
                 'transaction_id' => $transaction->id,
                 'card_invoice_id' => $invoice->id,
-                'installment_number' => $i,
+                'installment_number' => $i, // Número real da parcela (ex: 6 de 10)
                 'total_installments' => $totalInstallments,
                 'value' => $value,
                 'due_date' => $invoice->due_date,

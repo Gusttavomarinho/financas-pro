@@ -118,6 +118,7 @@ class EditTransactionTest extends TestCase
         // Pay it via API
         $response = $this->postJson("/api/cards/{$this->card->id}/pay", [
             'account_id' => $this->account->id,
+            'invoice_id' => $invoice->id,
             'amount' => 100.00
         ]);
         $response->assertStatus(200);

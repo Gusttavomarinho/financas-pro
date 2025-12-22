@@ -33,10 +33,12 @@ class TransactionService
      * - SEMPRE cria apenas 1 lançamento (a compra)
      * - As parcelas são entidades separadas vinculadas às faturas
      * - Data base é SEMPRE a data da compra, não o vencimento
+     * 
+     * @param int $startingInstallment Parcela inicial (para parcelamentos em andamento)
      */
-    public function createCreditPurchase(array $data, Card $card, int $installments = 1): Transaction
+    public function createCreditPurchase(array $data, Card $card, int $installments = 1, int $startingInstallment = 1): Transaction
     {
-        return DB::transaction(function () use ($data, $card, $installments) {
+        return DB::transaction(function () use ($data, $card, $installments, $startingInstallment) {
             $installmentValue = round($data['value'] / $installments, 2);
 
             // Criar a transação única (a compra)
@@ -58,7 +60,8 @@ class TransactionService
             ]);
 
             // Criar as parcelas (entidades separadas vinculadas às faturas)
-            $this->installmentService->createInstallments($transaction);
+            // Passa a parcela inicial para suportar parcelamentos em andamento
+            $this->installmentService->createInstallments($transaction, $startingInstallment);
 
             return $transaction;
         });
