@@ -1,16 +1,26 @@
 <template>
     <div>
-        <!-- Page header -->
+        <!-- Page header with Period Selector -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-            <p class="text-gray-500 dark:text-gray-400">Visão geral das suas finanças</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                    <p class="text-gray-500 dark:text-gray-400">Visão financeira do período</p>
+                </div>
+                <PeriodSelector 
+                    v-model:month="selectedMonth" 
+                    v-model:year="selectedYear" 
+                    v-model:mode="viewMode"
+                    @change="onPeriodChange"
+                />
+            </div>
         </div>
 
         <!-- Stats cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <RouterLink to="/accounts" class="block">
                 <StatCard
-                    title="Saldo Total"
+                    title="Saldo Atual"
                     :value="formatCurrency(stats.totalBalance)"
                     icon="wallet"
                     :trend="stats.balanceTrend"
@@ -18,9 +28,18 @@
                     clickable
                 />
             </RouterLink>
+            <div class="block">
+                <StatCard
+                    title="Saldo Previsto"
+                    :value="formatCurrency(stats.predictedBalance)"
+                    :subtitle="isCurrentOrFutureMonth ? 'Após faturas do período' : 'Período anterior'"
+                    icon="chart"
+                    color="purple"
+                />
+            </div>
             <RouterLink to="/transactions?type=receita" class="block">
                 <StatCard
-                    title="Receitas do Mês"
+                    title="Receitas do Período"
                     :value="formatCurrency(stats.monthIncome)"
                     icon="arrow-up"
                     :trend="stats.incomeTrend"
@@ -30,7 +49,7 @@
             </RouterLink>
             <RouterLink to="/transactions?type=despesa" class="block">
                 <StatCard
-                    title="Despesas do Mês"
+                    title="Despesas do Período"
                     :value="formatCurrency(stats.monthExpenses)"
                     icon="arrow-down"
                     :trend="stats.expensesTrend"
@@ -40,7 +59,7 @@
             </RouterLink>
             <RouterLink to="/cards" class="block">
                 <StatCard
-                    title="Faturas em Aberto"
+                    title="Faturas do Período"
                     :value="formatCurrency(stats.openInvoices)"
                     icon="credit-card"
                     color="yellow"
@@ -73,7 +92,7 @@
             <!-- Recent transactions -->
             <div class="card">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transações Recentes</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transações do Período</h3>
                     <RouterLink to="/transactions" class="text-sm text-primary-600 hover:text-primary-700">
                         Ver todas
                     </RouterLink>
@@ -115,7 +134,7 @@
             <!-- Upcoming bills / invoices -->
             <div class="card">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Próximas Faturas</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Faturas do Período</h3>
                     <RouterLink to="/cards" class="text-sm text-primary-600 hover:text-primary-700">
                         Ver cartões
                     </RouterLink>
@@ -157,19 +176,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { Chart, registerables } from 'chart.js';
 import axios from 'axios';
 import StatCard from '@/components/Common/StatCard.vue';
+import PeriodSelector from '@/components/Common/PeriodSelector.vue';
 import { useAccountsStore } from '@/stores/accounts';
 import { useCardsStore } from '@/stores/cards';
 import { useTransactionsStore } from '@/stores/transactions';
 
 Chart.register(...registerables);
 
+// Period state (default to current month/year)
+const now = new Date();
+const selectedMonth = ref(now.getMonth() + 1);
+const selectedYear = ref(now.getFullYear());
+const viewMode = ref('month'); // 'month' or 'year'
+
 const categoryChartRef = ref(null);
 const timelineChartRef = ref(null);
+let categoryChart = null;
+let timelineChart = null;
 
 const accountsStore = useAccountsStore();
 const cardsStore = useCardsStore();
@@ -177,6 +205,7 @@ const transactionsStore = useTransactionsStore();
 
 const stats = ref({
     totalBalance: 0,
+    predictedBalance: 0, // New: saldo previsto
     monthIncome: 0,
     monthExpenses: 0,
     openInvoices: 0,
@@ -188,6 +217,22 @@ const stats = ref({
 const recentTransactions = ref([]);
 const upcomingInvoices = ref([]);
 const categoryData = ref({ labels: [], data: [] });
+const loading = ref(false);
+
+// Computed to check if viewing current or future period
+const isCurrentOrFutureMonth = computed(() => {
+    const current = new Date();
+    
+    if (viewMode.value === 'year') {
+        // Year mode: check if selected year is current or future
+        return selectedYear.value >= current.getFullYear();
+    }
+    
+    // Month mode: check if selected month/year is current or future
+    const selectedDate = new Date(selectedYear.value, selectedMonth.value - 1, 1);
+    const currentMonthStart = new Date(current.getFullYear(), current.getMonth(), 1);
+    return selectedDate >= currentMonthStart;
+});
 
 function formatCurrency(value) {
     return new Intl.NumberFormat('pt-BR', {
@@ -268,52 +313,92 @@ function getTransactionPrefix(transaction) {
 }
 
 async function loadDashboardData() {
+    loading.value = true;
     try {
+        // Calculate period dates based on viewMode
+        let periodStart, periodEnd;
+        
+        if (viewMode.value === 'year') {
+            // Year mode: filter entire year
+            periodStart = `${selectedYear.value}-01-01`;
+            periodEnd = `${selectedYear.value}-12-31`;
+        } else {
+            // Month mode: filter selected month
+            periodStart = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-01`;
+            const lastDay = new Date(selectedYear.value, selectedMonth.value, 0).getDate();
+            periodEnd = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        }
+
         // Load accounts for total balance
         await accountsStore.fetchAccounts();
         stats.value.totalBalance = accountsStore.totalBalance;
 
         // Load transactions
         await transactionsStore.fetchTransactions();
-        recentTransactions.value = transactionsStore.transactions.slice(0, 5);
-
-        // Calculate month income/expenses
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-        const monthTransactions = transactionsStore.transactions.filter(t => {
-            return t.date >= monthStart && t.date <= monthEnd;
+        
+        // Filter transactions for selected period
+        const periodTransactions = transactionsStore.transactions.filter(t => {
+            return t.date >= periodStart && t.date <= periodEnd;
         });
 
-        stats.value.monthIncome = monthTransactions
+        // Recent transactions = transactions from the selected period
+        recentTransactions.value = periodTransactions.slice(0, 5);
+
+        // Calculate period income/expenses
+        stats.value.monthIncome = periodTransactions
             .filter(t => t.type === 'receita')
             .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
-        stats.value.monthExpenses = monthTransactions
+        stats.value.monthExpenses = periodTransactions
             .filter(t => t.type === 'despesa')
             .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
         // Load cards and invoices
         await cardsStore.fetchCards();
 
-        // Load open invoices from all cards
+        // Load invoices for the selected period
         const invoicesPromises = cardsStore.cards.map(async card => {
             try {
-                await cardsStore.fetchCurrentInvoice(card.id);
-                return cardsStore.currentInvoice ? { ...cardsStore.currentInvoice, card } : null;
+                await cardsStore.fetchInvoices(card.id);
+                
+                if (viewMode.value === 'year') {
+                    // Year mode: get all invoices for the year
+                    const yearInvoices = cardsStore.invoices.filter(i => 
+                        i.reference_month && i.reference_month.startsWith(`${selectedYear.value}-`)
+                    );
+                    return yearInvoices.map(inv => ({ ...inv, card }));
+                } else {
+                    // Month mode: find invoice matching the selected period
+                    const periodReference = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
+                    const periodInvoice = cardsStore.invoices.find(i => i.reference_month === periodReference);
+                    return periodInvoice ? [{ ...periodInvoice, card }] : [];
+                }
             } catch (e) {
-                return null;
+                return [];
             }
         });
 
-        const invoices = (await Promise.all(invoicesPromises)).filter(i => i && i.status !== 'paga');
-        upcomingInvoices.value = invoices;
-        stats.value.openInvoices = invoices.reduce((sum, i) => sum + (parseFloat(i.total_value) - parseFloat(i.paid_value)), 0);
+        const invoicesArrays = await Promise.all(invoicesPromises);
+        const allInvoices = invoicesArrays.flat().filter(i => i && i.status !== 'paga');
+        upcomingInvoices.value = allInvoices.slice(0, 5); // Limit for UI
+        stats.value.openInvoices = allInvoices.reduce((sum, i) => sum + (parseFloat(i.total_value || 0) - parseFloat(i.paid_value || 0)), 0);
+
+        // Calculate predicted balance (current balance - future expenses - open invoices)
+        const currentDate = new Date();
+        const isCurrentMonth = selectedMonth.value === (currentDate.getMonth() + 1) && selectedYear.value === currentDate.getFullYear();
+        const isFutureMonth = new Date(selectedYear.value, selectedMonth.value - 1, 1) > currentDate;
+        
+        if (isCurrentMonth || isFutureMonth) {
+            // For current/future months, predicted = balance - pending expenses - open invoices
+            stats.value.predictedBalance = stats.value.totalBalance - stats.value.openInvoices;
+        } else {
+            // For past months, just show the current balance
+            stats.value.predictedBalance = stats.value.totalBalance;
+        }
 
         // Category breakdown for chart
         const categoryBreakdown = {};
-        monthTransactions
+        periodTransactions
             .filter(t => t.type === 'despesa' && t.category)
             .forEach(t => {
                 const catName = t.category.name;
@@ -326,11 +411,24 @@ async function loadDashboardData() {
         };
     } catch (error) {
         console.error('Error loading dashboard data:', error);
+    } finally {
+        loading.value = false;
     }
+}
+
+// Handle period change
+async function onPeriodChange({ month, year }) {
+    await loadDashboardData();
+    await updateCharts();
 }
 
 onMounted(async () => {
     await loadDashboardData();
+    await nextTick();
+    await updateCharts();
+});
+
+async function updateCharts() {
     await nextTick();
     
     // Category pie chart
@@ -338,7 +436,12 @@ onMounted(async () => {
         const labels = categoryData.value.labels.length ? categoryData.value.labels : ['Sem dados'];
         const data = categoryData.value.data.length ? categoryData.value.data : [1];
         
-        new Chart(categoryChartRef.value, {
+        // Destroy existing chart if any
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+        
+        categoryChart = new Chart(categoryChartRef.value, {
             type: 'doughnut',
             data: {
                 labels,
@@ -372,17 +475,23 @@ onMounted(async () => {
         });
     }
     
-    // Timeline chart - mock data for now
+    // Timeline chart
     if (timelineChartRef.value) {
         const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        const currentMonth = new Date().getMonth();
+        
+        // Build labels for the selected month context
         const recentMonths = [];
         for (let i = 5; i >= 0; i--) {
-            const idx = (currentMonth - i + 12) % 12;
-            recentMonths.push(months[idx]);
+            const monthIdx = ((selectedMonth.value - 1) - i + 12) % 12;
+            recentMonths.push(months[monthIdx]);
         }
 
-        new Chart(timelineChartRef.value, {
+        // Destroy existing chart if any
+        if (timelineChart) {
+            timelineChart.destroy();
+        }
+
+        timelineChart = new Chart(timelineChartRef.value, {
             type: 'line',
             data: {
                 labels: recentMonths,
@@ -432,5 +541,5 @@ onMounted(async () => {
             },
         });
     }
-});
+}
 </script>
