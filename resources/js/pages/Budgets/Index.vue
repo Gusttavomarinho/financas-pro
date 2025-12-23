@@ -59,35 +59,39 @@
             </span>
         </DismissableBanner>
 
-        <!-- General Budget Card -->
-        <div v-if="generalBudget" class="card mb-6 border-2 border-primary-200 dark:border-primary-800">
+        <!-- General Budget Cards -->
+        <div v-for="budget in generalBudgets" :key="budget.id" 
+             class="card mb-4 border-2" 
+             :class="budget.status === 'paused' ? 'border-yellow-300 dark:border-yellow-700 opacity-75' : 'border-primary-200 dark:border-primary-800'"
+             @click="openTransactionHistoryModal(budget)">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                         :class="budget.status === 'paused' ? 'bg-yellow-100 dark:bg-yellow-900/50' : 'bg-primary-100 dark:bg-primary-900/50'">
+                        <svg class="w-6 h-6" :class="budget.status === 'paused' ? 'text-yellow-600 dark:text-yellow-400' : 'text-primary-600 dark:text-primary-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                            {{ generalBudget.name }}
-                            <span v-if="generalBudget.status === 'paused'" class="ml-2 text-sm text-yellow-600">(Pausado)</span>
+                            {{ budget.name }}
+                            <span v-if="budget.status === 'paused'" class="ml-2 text-sm text-yellow-600">(Pausado)</span>
                         </h3>
                         <p class="text-sm text-gray-500">
-                            {{ formatCurrency(currentPeriodSpent) }} de {{ formatCurrency(generalBudget.limit_value) }}
-                            <span class="ml-2">• {{ generalBudget.period_type === 'monthly' ? 'Mensal' : 'Anual' }}</span>
-                            <span v-if="currentPeriod" class="ml-2 text-gray-400">• {{ currentPeriodLabel }}</span>
+                            {{ formatCurrency(getBudgetSpent(budget)) }} de {{ formatCurrency(budget.limit_value) }}
+                            <span class="ml-2">• {{ budget.period_type === 'monthly' ? 'Mensal' : 'Anual' }}</span>
+                            <span v-if="getBudgetCurrentPeriod(budget)" class="ml-2 text-gray-400">• {{ getBudgetPeriodLabel(budget) }}</span>
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span v-if="currentPeriod" :class="getGeneralBudgetStatusClass(currentPeriod.status)">
-                        {{ getGeneralBudgetStatusLabel(currentPeriod.status) }}
+                <div class="flex items-center gap-2" @click.stop>
+                    <span v-if="getBudgetCurrentPeriod(budget)" :class="getGeneralBudgetStatusClass(getBudgetCurrentPeriod(budget)?.status || 'ok')">
+                        {{ getGeneralBudgetStatusLabel(getBudgetCurrentPeriod(budget)?.status || 'ok') }}
                     </span>
                     <!-- Pause/Resume button -->
                     <button 
-                        v-if="generalBudget.status === 'active'" 
-                        @click="pauseGeneralBudget" 
+                        v-if="budget.status === 'active'" 
+                        @click="pauseGeneralBudgetById(budget.id)" 
                         class="p-2 text-yellow-500 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 rounded-lg"
                         title="Pausar"
                     >
@@ -96,8 +100,8 @@
                         </svg>
                     </button>
                     <button 
-                        v-else-if="generalBudget.status === 'paused'" 
-                        @click="resumeGeneralBudget" 
+                        v-else-if="budget.status === 'paused'" 
+                        @click="resumeGeneralBudgetById(budget.id)" 
                         class="p-2 text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
                         title="Retomar"
                     >
@@ -107,9 +111,15 @@
                         </svg>
                     </button>
                     <!-- Edit button -->
-                    <button @click="openGeneralBudgetModal" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Editar">
+                    <button @click="openGeneralBudgetModalForEdit(budget)" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+                    <!-- Delete button -->
+                    <button @click="confirmDeleteGeneralBudget(budget)" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg" title="Excluir">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
                 </div>
@@ -118,21 +128,28 @@
             <div class="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div 
                     class="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-                    :class="getGeneralProgressBarClass(currentPeriod?.status || 'ok')"
-                    :style="{ width: Math.min(currentPeriodPercentage, 100) + '%' }"
+                    :class="getGeneralProgressBarClass(getBudgetCurrentPeriod(budget)?.status || 'ok')"
+                    :style="{ width: Math.min(getBudgetPercentage(budget), 100) + '%' }"
                 ></div>
             </div>
-            <p class="text-sm text-gray-500 mt-2 text-right">{{ Math.round(currentPeriodPercentage) }}% utilizado</p>
+            <p class="text-sm text-gray-500 mt-2 text-right">{{ Math.round(getBudgetPercentage(budget)) }}% utilizado</p>
         </div>
 
         <!-- No General Budget - Option to create -->
-        <div v-else class="card mb-6 border-2 border-dashed border-gray-200 dark:border-gray-700 text-center py-6">
+        <div v-if="generalBudgets.length === 0" class="card mb-6 border-2 border-dashed border-gray-200 dark:border-gray-700 text-center py-6">
             <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <p class="text-gray-500 mb-3">Defina um orçamento geral para controlar seus gastos totais</p>
             <button @click="openGeneralBudgetModal" class="btn-primary btn-sm">
                 + Criar Orçamento Geral
+            </button>
+        </div>
+
+        <!-- Option to create second type if only one exists -->
+        <div v-else-if="canCreateAnotherGeneralBudget" class="mb-4 text-center">
+            <button @click="openGeneralBudgetModal" class="btn-secondary btn-sm">
+                + Criar Orçamento {{ missingGeneralBudgetType === 'monthly' ? 'Mensal' : 'Anual' }}
             </button>
         </div>
 
@@ -375,7 +392,7 @@
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold text-gray-900 dark:text-white">
-                        {{ generalBudget ? 'Editar' : 'Criar' }} Orçamento Geral
+                        {{ selectedGeneralBudget ? 'Editar' : 'Criar' }} Orçamento Geral
                     </h3>
                     <button @click="showGeneralBudgetModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -443,10 +460,89 @@
                             Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary flex-1" :disabled="savingGeneralBudget">
-                            {{ savingGeneralBudget ? 'Salvando...' : (generalBudget ? 'Salvar' : 'Criar') }}
+                            {{ savingGeneralBudget ? 'Salvando...' : (selectedGeneralBudget ? 'Salvar' : 'Criar') }}
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Delete General Budget Confirmation Modal -->
+        <div v-if="showDeleteGeneralBudgetConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Excluir Orçamento Geral</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">
+                        Deseja remover o orçamento <strong>{{ budgetToDelete?.name }}</strong>?<br>
+                        <span class="text-sm">O histórico de períodos anteriores será perdido.</span>
+                    </p>
+                    <div class="flex gap-3">
+                        <button @click="showDeleteGeneralBudgetConfirm = false" class="btn btn-secondary flex-1">
+                            Cancelar
+                        </button>
+                        <button @click="deleteGeneralBudget" class="btn bg-red-600 text-white hover:bg-red-700 flex-1">
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History Modal -->
+        <div v-if="showTransactionHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between p-6 border-b dark:border-gray-700">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                            Lançamentos - {{ historyBudget?.name }}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ getBudgetPeriodLabel(historyBudget) }} • {{ historyBudget?.period_type === 'monthly' ? 'Mensal' : 'Anual' }}</p>
+                    </div>
+                    <button @click="showTransactionHistoryModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div v-if="loadingHistory" class="text-center py-8">
+                        <div class="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
+                        <p class="text-gray-500 mt-2">Carregando...</p>
+                    </div>
+                    <div v-else-if="historyTransactions.length === 0" class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Nenhum lançamento neste período
+                    </div>
+                    <div v-else class="space-y-2">
+                        <div v-for="tx in historyTransactions" :key="tx.id" 
+                             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg"
+                                     :style="{ backgroundColor: tx.category?.color || '#888' }">
+                                    {{ tx.category?.icon || '💰' }}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ tx.description }}</p>
+                                    <p class="text-sm text-gray-500">{{ tx.category?.name }} • {{ new Date(tx.date).toLocaleDateString('pt-BR') }}</p>
+                                </div>
+                            </div>
+                            <span class="font-semibold text-red-600">{{ formatCurrency(tx.amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Total do período:</span>
+                        <span class="text-xl font-bold text-red-600">{{ formatCurrency(getBudgetSpent(historyBudget)) }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -485,7 +581,8 @@ const form = ref({
 const loading = computed(() => budgetsStore.loading);
 const budgets = computed(() => budgetsStore.budgets);
 const totals = computed(() => budgetsStore.totals);
-const generalBudget = ref(null);
+const generalBudgets = ref([]);
+const selectedGeneralBudget = ref(null); // For editing/viewing
 
 // General Budget helper functions
 function getGeneralBudgetStatusClass(status) {
@@ -518,60 +615,126 @@ function getGeneralProgressBarClass(status) {
 async function loadGeneralBudget() {
     try {
         const response = await axios.get('/api/general-budgets-current');
-        // Show monthly budget if available, otherwise annual
-        generalBudget.value = response.data.data?.monthly || response.data.data?.annual || null;
+        // Store both monthly and yearly if they exist
+        const data = response.data.data || {};
+        generalBudgets.value = [];
+        if (data.monthly) generalBudgets.value.push(data.monthly);
+        if (data.yearly) generalBudgets.value.push(data.yearly);
     } catch (e) {
         console.error('Error loading general budget:', e);
     }
 }
 
-// Computed properties for current period
-const currentPeriod = computed(() => {
-    if (!generalBudget.value) return null;
-    // Find current period from periods array
-    const periods = generalBudget.value.periods || [];
+// Helper functions for multiple budgets
+function getBudgetCurrentPeriod(budget) {
+    if (!budget) return null;
+    const periods = budget.periods || [];
     const now = new Date();
     const year = now.getFullYear();
-    const month = generalBudget.value.period_type === 'monthly' ? now.getMonth() + 1 : null;
-    return periods.find(p => p.reference_year === year && p.reference_month === month) || null;
-});
+    const month = budget.period_type === 'monthly' ? now.getMonth() + 1 : null;
+    return periods.find(p => p.reference_year === year && p.reference_month === month) || periods[periods.length - 1] || null;
+}
 
-const currentPeriodSpent = computed(() => {
-    return parseFloat(currentPeriod.value?.spent || 0);
-});
+function getBudgetSpent(budget) {
+    const period = getBudgetCurrentPeriod(budget);
+    return parseFloat(period?.spent || 0);
+}
 
-const currentPeriodPercentage = computed(() => {
-    return parseFloat(currentPeriod.value?.percentage || 0);
-});
+function getBudgetPercentage(budget) {
+    const period = getBudgetCurrentPeriod(budget);
+    return parseFloat(period?.percentage || 0);
+}
 
-const currentPeriodLabel = computed(() => {
-    if (!currentPeriod.value) return '';
+function getBudgetPeriodLabel(budget) {
+    const period = getBudgetCurrentPeriod(budget);
+    if (!period) return '';
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    if (currentPeriod.value.reference_month) {
-        return months[currentPeriod.value.reference_month - 1] + '/' + currentPeriod.value.reference_year;
+    if (period.reference_month) {
+        return months[period.reference_month - 1] + '/' + period.reference_year;
     }
-    return String(currentPeriod.value.reference_year);
+    return String(period.reference_year);
+}
+
+// Computed for allowing creation of second type
+const canCreateAnotherGeneralBudget = computed(() => {
+    if (generalBudgets.value.length === 0) return false;
+    if (generalBudgets.value.length >= 2) return false;
+    const existingType = generalBudgets.value[0]?.period_type;
+    return existingType === 'monthly' || existingType === 'yearly';
 });
 
-// Pause/Resume functions
-async function pauseGeneralBudget() {
-    if (!generalBudget.value) return;
+const missingGeneralBudgetType = computed(() => {
+    if (generalBudgets.value.length === 1) {
+        return generalBudgets.value[0].period_type === 'monthly' ? 'yearly' : 'monthly';
+    }
+    return null;
+});
+
+// Pause/Resume functions by ID
+async function pauseGeneralBudgetById(id) {
     try {
-        await axios.post(`/api/general-budgets/${generalBudget.value.id}/pause`);
+        await axios.post(`/api/general-budgets/${id}/pause`);
         await loadGeneralBudget();
     } catch (e) {
         console.error('Error pausing budget:', e);
     }
 }
 
-async function resumeGeneralBudget() {
-    if (!generalBudget.value) return;
+async function resumeGeneralBudgetById(id) {
     try {
-        await axios.post(`/api/general-budgets/${generalBudget.value.id}/resume`);
+        await axios.post(`/api/general-budgets/${id}/resume`);
         await loadGeneralBudget();
     } catch (e) {
         console.error('Error resuming budget:', e);
     }
+}
+
+// Delete confirmation
+const showDeleteGeneralBudgetConfirm = ref(false);
+const budgetToDelete = ref(null);
+
+function confirmDeleteGeneralBudget(budget) {
+    budgetToDelete.value = budget;
+    showDeleteGeneralBudgetConfirm.value = true;
+}
+
+async function deleteGeneralBudget() {
+    if (!budgetToDelete.value) return;
+    try {
+        await axios.delete(`/api/general-budgets/${budgetToDelete.value.id}`);
+        showDeleteGeneralBudgetConfirm.value = false;
+        budgetToDelete.value = null;
+        await loadGeneralBudget();
+    } catch (e) {
+        console.error('Error deleting budget:', e);
+    }
+}
+
+// Transaction History Modal 
+const showTransactionHistoryModal = ref(false);
+const historyBudget = ref(null);
+const historyTransactions = ref([]);
+const loadingHistory = ref(false);
+
+async function openTransactionHistoryModal(budget) {
+    historyBudget.value = budget;
+    showTransactionHistoryModal.value = true;
+    loadingHistory.value = true;
+    
+    try {
+        // Load transactions from current period
+        const period = getBudgetCurrentPeriod(budget);
+        if (period) {
+            const response = await axios.get(`/api/general-budget-periods/${period.id}/transactions`);
+            historyTransactions.value = response.data.data || [];
+        } else {
+            historyTransactions.value = [];
+        }
+    } catch (e) {
+        console.error('Error loading transactions:', e);
+        historyTransactions.value = [];
+    }
+    loadingHistory.value = false;
 }
 
 // General Budget Modal state
@@ -585,25 +748,25 @@ const generalBudgetForm = ref({
 });
 
 function openGeneralBudgetModal() {
-    // If editing, populate form with existing values
-    if (generalBudget.value) {
-        generalBudgetForm.value = {
-            name: generalBudget.value.name || '',
-            limit_value: parseFloat(generalBudget.value.limit_value) || 0,
-            period_type: generalBudget.value.period_type || 'monthly',
-            include_future_categories: generalBudget.value.include_future_categories ?? true,
-        };
-    } else {
-        // Reset form for new budget
-        generalBudgetForm.value = {
-            name: '',
-            amount: 0,
-            type: 'mensal',
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear(),
-            include_future_categories: true,
-        };
-    }
+    // Reset form for new budget, pre-set type if only one type is missing
+    selectedGeneralBudget.value = null;
+    generalBudgetForm.value = {
+        name: '',
+        limit_value: 0,
+        period_type: missingGeneralBudgetType.value || 'monthly',
+        include_future_categories: true,
+    };
+    showGeneralBudgetModal.value = true;
+}
+
+function openGeneralBudgetModalForEdit(budget) {
+    selectedGeneralBudget.value = budget;
+    generalBudgetForm.value = {
+        name: budget.name || '',
+        limit_value: parseFloat(budget.limit_value) || 0,
+        period_type: budget.period_type || 'monthly',
+        include_future_categories: budget.include_future_categories ?? true,
+    };
     showGeneralBudgetModal.value = true;
 }
 
@@ -617,15 +780,16 @@ async function saveGeneralBudget() {
             include_future_categories: generalBudgetForm.value.include_future_categories,
         };
 
-        if (generalBudget.value) {
+        if (selectedGeneralBudget.value) {
             // Update existing
-            await axios.put(`/api/general-budgets/${generalBudget.value.id}`, payload);
+            await axios.put(`/api/general-budgets/${selectedGeneralBudget.value.id}`, payload);
         } else {
             // Create new
             await axios.post('/api/general-budgets', payload);
         }
 
         showGeneralBudgetModal.value = false;
+        selectedGeneralBudget.value = null;
         await loadGeneralBudget();
     } catch (e) {
         console.error('Error saving general budget:', e);

@@ -160,27 +160,31 @@ class GeneralBudgetController extends Controller
     }
 
     /**
-     * Get current active budget with period.
+     * Get current budgets with period (active and paused, not ended).
      */
     public function current(): JsonResponse
     {
         $monthlyBudget = GeneralBudget::where('user_id', Auth::id())
             ->where('period_type', 'monthly')
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'paused'])
             ->first();
 
         $yearlyBudget = GeneralBudget::where('user_id', Auth::id())
             ->where('period_type', 'yearly')
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'paused'])
             ->first();
 
-        // Ensure current periods exist
+        // Load periods for all budgets
         if ($monthlyBudget) {
-            $monthlyBudget->ensureCurrentPeriod();
+            if ($monthlyBudget->status === 'active') {
+                $monthlyBudget->ensureCurrentPeriod();
+            }
             $monthlyBudget->load('periods');
         }
         if ($yearlyBudget) {
-            $yearlyBudget->ensureCurrentPeriod();
+            if ($yearlyBudget->status === 'active') {
+                $yearlyBudget->ensureCurrentPeriod();
+            }
             $yearlyBudget->load('periods');
         }
 
@@ -252,6 +256,36 @@ class GeneralBudgetController extends Controller
         return response()->json([
             'message' => 'Orçamento encerrado.',
             'data' => $generalBudget->fresh(),
+        ]);
+    }
+
+    /**
+     * Get transactions for a budget period.
+     */
+    public function periodTransactions(\App\Models\GeneralBudgetPeriod $period): JsonResponse
+    {
+        // Verify the period belongs to user's budget
+        $budget = $period->generalBudget;
+        if (!$budget || $budget->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Não autorizado.'], 403);
+        }
+
+        // Get expense transactions for this period
+        $query = \App\Models\Transaction::where('user_id', Auth::id())
+            ->where('type', 'expense')
+            ->whereYear('date', $period->reference_year);
+
+        if ($period->reference_month) {
+            $query->whereMonth('date', $period->reference_month);
+        }
+
+        $transactions = $query->with('category')
+            ->orderBy('date', 'desc')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'data' => $transactions,
         ]);
     }
 }

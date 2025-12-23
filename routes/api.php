@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('general-budgets/{generalBudget}/pause', [GeneralBudgetController::class, 'pause']);
     Route::post('general-budgets/{generalBudget}/resume', [GeneralBudgetController::class, 'resume']);
     Route::post('general-budgets/{generalBudget}/end', [GeneralBudgetController::class, 'end']);
+    Route::get('general-budget-periods/{period}/transactions', [GeneralBudgetController::class, 'periodTransactions']);
 
     // Goals (Objetivos)
     Route::apiResource('goals', GoalController::class);
