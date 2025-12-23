@@ -456,6 +456,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useBudgetsStore } from '@/stores/budgets';
 import { useCategoriesStore } from '@/stores/categories';
+import axios from 'axios';
 import MoneyInput from '@/components/Common/MoneyInput.vue';
 import PeriodSelector from '@/components/Common/PeriodSelector.vue';
 import DismissableBanner from '@/components/Common/DismissableBanner.vue';
@@ -516,15 +517,9 @@ function getGeneralProgressBarClass(status) {
 
 async function loadGeneralBudget() {
     try {
-        const response = await fetch('/api/general-budgets-current', {
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' },
-        });
-        if (response.ok) {
-            const data = await response.json();
-            // Show monthly budget if available, otherwise annual
-            generalBudget.value = data.data?.monthly || data.data?.annual || null;
-        }
+        const response = await axios.get('/api/general-budgets-current');
+        // Show monthly budget if available, otherwise annual
+        generalBudget.value = response.data.data?.monthly || response.data.data?.annual || null;
     } catch (e) {
         console.error('Error loading general budget:', e);
     }
@@ -562,14 +557,8 @@ const currentPeriodLabel = computed(() => {
 async function pauseGeneralBudget() {
     if (!generalBudget.value) return;
     try {
-        const response = await fetch(`/api/general-budgets/${generalBudget.value.id}/pause`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' },
-        });
-        if (response.ok) {
-            await loadGeneralBudget();
-        }
+        await axios.post(`/api/general-budgets/${generalBudget.value.id}/pause`);
+        await loadGeneralBudget();
     } catch (e) {
         console.error('Error pausing budget:', e);
     }
@@ -578,14 +567,8 @@ async function pauseGeneralBudget() {
 async function resumeGeneralBudget() {
     if (!generalBudget.value) return;
     try {
-        const response = await fetch(`/api/general-budgets/${generalBudget.value.id}/resume`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' },
-        });
-        if (response.ok) {
-            await loadGeneralBudget();
-        }
+        await axios.post(`/api/general-budgets/${generalBudget.value.id}/resume`);
+        await loadGeneralBudget();
     } catch (e) {
         console.error('Error resuming budget:', e);
     }
@@ -634,35 +617,19 @@ async function saveGeneralBudget() {
             include_future_categories: generalBudgetForm.value.include_future_categories,
         };
 
-        let response;
         if (generalBudget.value) {
             // Update existing
-            response = await fetch(`/api/general-budgets/${generalBudget.value.id}`, {
-                method: 'PUT',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            await axios.put(`/api/general-budgets/${generalBudget.value.id}`, payload);
         } else {
             // Create new
-            response = await fetch('/api/general-budgets', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            await axios.post('/api/general-budgets', payload);
         }
 
-        if (response.ok) {
-            showGeneralBudgetModal.value = false;
-            await loadGeneralBudget();
-        } else {
-            const error = await response.json();
-            alert(error.message || 'Erro ao salvar orçamento geral');
-        }
+        showGeneralBudgetModal.value = false;
+        await loadGeneralBudget();
     } catch (e) {
         console.error('Error saving general budget:', e);
-        alert('Erro ao salvar orçamento geral');
+        alert(e.response?.data?.message || 'Erro ao salvar orçamento geral');
     } finally {
         savingGeneralBudget.value = false;
     }
