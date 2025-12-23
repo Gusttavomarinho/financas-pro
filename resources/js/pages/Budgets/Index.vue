@@ -517,6 +517,7 @@ function getGeneralProgressBarClass(status) {
 async function loadGeneralBudget() {
     try {
         const response = await fetch('/api/general-budgets-current', {
+            credentials: 'include',
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -563,6 +564,7 @@ async function pauseGeneralBudget() {
     try {
         const response = await fetch(`/api/general-budgets/${generalBudget.value.id}/pause`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -578,6 +580,7 @@ async function resumeGeneralBudget() {
     try {
         const response = await fetch(`/api/general-budgets/${generalBudget.value.id}/resume`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -636,6 +639,7 @@ async function saveGeneralBudget() {
             // Update existing
             response = await fetch(`/api/general-budgets/${generalBudget.value.id}`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload),
             });
@@ -643,6 +647,7 @@ async function saveGeneralBudget() {
             // Create new
             response = await fetch('/api/general-budgets', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload),
             });
