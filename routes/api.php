@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ImportController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -132,4 +133,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Import OFX
     Route::post('import/parse', [ImportController::class, 'parse']);
     Route::post('import/confirm', [ImportController::class, 'confirm']);
+
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });

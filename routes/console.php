@@ -23,3 +23,15 @@ Schedule::command('recurring:generate')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/recurring.log'))
     ->description('Gera transações de recorrências ativas');
+
+/**
+ * Job para verificar faturas próximas do vencimento
+ * 
+ * Executa diariamente às 08:00 (horário comercial)
+ * Envia notificações para faturas que vencem em 3 dias
+ */
+Schedule::job(new \App\Jobs\CheckInvoicesDueSoon())
+    ->daily()
+    ->at('08:00')
+    ->withoutOverlapping()
+    ->description('Notifica sobre faturas próximas do vencimento');

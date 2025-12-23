@@ -94,6 +94,9 @@
                         <span class="hidden sm:inline">Novo Lançamento</span>
                     </RouterLink>
 
+                    <!-- Notifications Bell -->
+                    <NotificationBell />
+
                     <button
                         @click="uiStore.toggleDarkMode"
                         class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -121,6 +124,7 @@ import { computed, h } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/ui';
+import NotificationBell from '@/components/Common/NotificationBell.vue';
 
 const route = useRoute();
 const router = useRouter();

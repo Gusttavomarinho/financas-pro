@@ -9,6 +9,7 @@ use App\Models\Card;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Services\ImportDetectionService;
+use App\Services\NotificationService;
 use App\Services\OfxParserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ class ImportController extends Controller
 {
     public function __construct(
         private OfxParserService $ofxParser,
-        private ImportDetectionService $detectionService
+        private ImportDetectionService $detectionService,
+        private NotificationService $notificationService
     ) {
     }
 
@@ -157,6 +159,11 @@ class ImportController extends Controller
                 ],
                 $userId
             );
+
+            // Send notification
+            if (count($created) > 0) {
+                $this->notificationService->notifyImportCompleted($userId, count($created), count($skipped));
+            }
 
             DB::commit();
 

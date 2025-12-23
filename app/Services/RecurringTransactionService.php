@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class RecurringTransactionService
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {
+    }
+
     /**
      * Processa todas as recorrências ativas que venceram até a data informada
      */
@@ -24,11 +29,25 @@ class RecurringTransactionService
 
         foreach ($dueRecurrings as $recurring) {
             try {
-                $this->generateTransaction($recurring);
+                $transaction = $this->generateTransaction($recurring);
+
+                // Send success notification
+                $this->notificationService->notifyRecurringGenerated(
+                    $recurring->user_id,
+                    $recurring->description,
+                    $recurring->value
+                );
+
                 $count++;
             } catch (\Exception $e) {
                 Log::error("Falha ao gerar recorrência ID {$recurring->id}: " . $e->getMessage());
-                // TODO: Notificar admin/usuário
+
+                // Send failure notification
+                $this->notificationService->notifyRecurringFailed(
+                    $recurring->user_id,
+                    $recurring->description,
+                    $e->getMessage()
+                );
             }
         }
 
