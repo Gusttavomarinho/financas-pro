@@ -433,14 +433,23 @@ async function loadBudgetData() {
     try {
         // Load general budgets (both monthly and annual)
         const generalResponse = await axios.get('/api/general-budgets-current');
-        const allGeneralBudgets = generalResponse.data.data || [];
-        console.log('General budgets loaded:', allGeneralBudgets);
+        const budgetsData = generalResponse.data.data || {};
+        console.log('General budgets loaded:', budgetsData);
         
-        // Get monthly budget (active or paused)
-        generalBudget.value = allGeneralBudgets.find(b => b.period_type === 'monthly') || null;
+        // API returns {monthly: {...}, yearly: {...}} or arrays
+        // Handle both formats
+        if (Array.isArray(budgetsData)) {
+            // Old format: array of budgets
+            generalBudget.value = budgetsData.find(b => b.period_type === 'monthly') || null;
+            annualBudget.value = budgetsData.find(b => b.period_type === 'annual' || b.period_type === 'yearly') || null;
+        } else {
+            // New format: {monthly: {...}, yearly: {...}}
+            generalBudget.value = budgetsData.monthly || null;
+            annualBudget.value = budgetsData.yearly || budgetsData.annual || null;
+        }
         
-        // Get annual budget (will be shown separately)
-        annualBudget.value = allGeneralBudgets.find(b => b.period_type === 'annual') || null;
+        console.log('Monthly budget:', generalBudget.value);
+        console.log('Annual budget:', annualBudget.value);
 
         // Load category budgets for current period
         const period = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
