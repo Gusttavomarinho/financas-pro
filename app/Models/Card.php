@@ -17,7 +17,6 @@ class Card extends Model
         'account_id',
         'primary_account_id',
         'name',
-        'bank',
         'brand',
         'holder_name',
         'last_4_digits',

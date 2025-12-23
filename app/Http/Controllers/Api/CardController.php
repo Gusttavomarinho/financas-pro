@@ -25,7 +25,7 @@ class CardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $cards = Card::where('user_id', $request->user()->id)
-            ->with('primaryAccount')
+            ->with(['primaryAccount', 'account'])
             ->orderBy('name')
             ->get();
 
@@ -42,7 +42,6 @@ class CardController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'account_id' => ['required', 'exists:accounts,id'],
-            'bank' => ['required', 'string', 'max:255'],
             'brand' => ['required', 'in:visa,mastercard,elo,amex,diners,hipercard,discover'],
             'holder_name' => ['required', 'string', 'max:255'],
             'last_4_digits' => ['required', 'string', 'size:4'],
@@ -58,7 +57,6 @@ class CardController extends Controller
             'name.required' => 'O nome do cartão é obrigatório.',
             'account_id.required' => 'Selecione uma conta para vincular ao cartão.',
             'account_id.exists' => 'A conta selecionada não existe.',
-            'bank.required' => 'O banco é obrigatório.',
             'brand.required' => 'A bandeira é obrigatória.',
             'holder_name.required' => 'O nome do titular é obrigatório.',
             'last_4_digits.required' => 'Os últimos 4 dígitos são obrigatórios.',
@@ -114,7 +112,6 @@ class CardController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'bank' => ['sometimes', 'string', 'max:255'],
             'brand' => ['sometimes', 'in:visa,mastercard,elo,amex,diners,hipercard,discover'],
             'holder_name' => ['sometimes', 'string', 'max:255'],
             'last_4_digits' => ['sometimes', 'string', 'size:4'],

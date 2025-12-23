@@ -16,6 +16,11 @@
             </div>
         </div>
 
+        <!-- Transparency info banner -->
+        <DismissableBanner storage-key="dashboard-calc-info" color="blue" class="mb-4">
+            💡 Os valores consideram os lançamentos pela data da transação, não pela data de vencimento da fatura.
+        </DismissableBanner>
+
         <!-- Stats cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <RouterLink to="/accounts" class="block">
@@ -131,7 +136,7 @@
                 </div>
             </div>
 
-            <!-- Upcoming bills / invoices -->
+            <!-- Faturas do Período - Updated Layout -->
             <div class="card">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Faturas do Período</h3>
@@ -139,36 +144,70 @@
                         Ver cartões
                     </RouterLink>
                 </div>
-                <div v-if="upcomingInvoices.length" class="space-y-3">
+
+                <!-- Current Invoice (compras do mês) -->
+                <div v-if="currentInvoice" class="mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Fatura Atual</p>
                     <RouterLink
-                        v-for="invoice in upcomingInvoices"
-                        :key="invoice.id"
-                        :to="`/cards/${invoice.card_id}/invoice`"
-                        class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        :to="`/cards/${currentInvoice.card_id}/invoice`"
+                        class="flex items-center gap-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors border border-yellow-200 dark:border-yellow-800"
                     >
-                        <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-400 flex items-center justify-center">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {{ invoice.card?.name || 'Fatura' }}
+                                {{ currentInvoice.card?.name || 'Fatura' }}
                             </p>
                             <p class="text-xs text-gray-500">
-                                Vencimento: {{ formatDate(invoice.due_date) }}
-                                <span :class="['ml-1 font-bold', getDueWarningClass(getDaysUntilDue(invoice.due_date))]">
-                                    ({{ getDueWarningText(getDaysUntilDue(invoice.due_date)) }})
-                                </span>
+                                {{ getStatusLabel(currentInvoice.status) }} • Vence {{ formatDate(currentInvoice.due_date) }}
                             </p>
                         </div>
-                        <span class="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
-                            {{ formatCurrency(invoice.total_value - invoice.paid_value) }}
+                        <span class="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                            {{ formatCurrency(currentInvoice.total_value - currentInvoice.paid_value) }}
                         </span>
                     </RouterLink>
                 </div>
-                <div v-else class="text-center py-8 text-gray-500">
-                    Nenhuma fatura pendente
+
+                <!-- Previous Invoice (paga/fechada) -->
+                <div v-if="previousInvoice">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Fatura Anterior</p>
+                    <RouterLink
+                        :to="`/cards/${previousInvoice.card_id}/invoice`"
+                        class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                            :class="previousInvoice.status === 'paga' 
+                                ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                            ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path v-if="previousInvoice.status === 'paga'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {{ previousInvoice.card?.name || 'Fatura' }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ getStatusLabel(previousInvoice.status) }}
+                            </p>
+                        </div>
+                        <span class="text-sm font-semibold"
+                            :class="previousInvoice.status === 'paga' 
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-gray-600 dark:text-gray-400'
+                            ">
+                            {{ formatCurrency(previousInvoice.total_value) }}
+                        </span>
+                    </RouterLink>
+                </div>
+
+                <div v-if="!currentInvoice && !previousInvoice" class="text-center py-8 text-gray-500">
+                    Nenhuma fatura no período
                 </div>
             </div>
         </div>
@@ -182,6 +221,7 @@ import { Chart, registerables } from 'chart.js';
 import axios from 'axios';
 import StatCard from '@/components/Common/StatCard.vue';
 import PeriodSelector from '@/components/Common/PeriodSelector.vue';
+import DismissableBanner from '@/components/Common/DismissableBanner.vue';
 import { useAccountsStore } from '@/stores/accounts';
 import { useCardsStore } from '@/stores/cards';
 import { useTransactionsStore } from '@/stores/transactions';
@@ -216,8 +256,22 @@ const stats = ref({
 
 const recentTransactions = ref([]);
 const upcomingInvoices = ref([]);
+const currentInvoice = ref(null);
+const previousInvoice = ref(null);
 const categoryData = ref({ labels: [], data: [] });
 const loading = ref(false);
+
+function getStatusLabel(status) {
+    const labels = {
+        aberta: 'Em aberto',
+        fechada: 'Fechada',
+        parcialmente_paga: 'Parcialmente paga',
+        paga: 'Paga',
+        vencida: 'Vencida',
+    };
+    return labels[status] || status;
+}
+
 
 // Computed to check if viewing current or future period
 const isCurrentOrFutureMonth = computed(() => {
@@ -356,32 +410,65 @@ async function loadDashboardData() {
         // Load cards and invoices
         await cardsStore.fetchCards();
 
-        // Load invoices for the selected period
+        // Load invoices and find current + previous for the selected period
+        // Current invoice = fatura cujos lançamentos são do mês visualizado (opening_date está no mês)
+        // Previous invoice = fatura do mês anterior (paga ou fechada)
         const invoicesPromises = cardsStore.cards.map(async card => {
             try {
                 await cardsStore.fetchInvoices(card.id);
-                
-                if (viewMode.value === 'year') {
-                    // Year mode: get all invoices for the year
-                    const yearInvoices = cardsStore.invoices.filter(i => 
-                        i.reference_month && i.reference_month.startsWith(`${selectedYear.value}-`)
-                    );
-                    return yearInvoices.map(inv => ({ ...inv, card }));
-                } else {
-                    // Month mode: find invoice matching the selected period
-                    const periodReference = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
-                    const periodInvoice = cardsStore.invoices.find(i => i.reference_month === periodReference);
-                    return periodInvoice ? [{ ...periodInvoice, card }] : [];
-                }
+                return cardsStore.invoices.map(inv => ({ ...inv, card }));
             } catch (e) {
                 return [];
             }
         });
 
         const invoicesArrays = await Promise.all(invoicesPromises);
-        const allInvoices = invoicesArrays.flat().filter(i => i && i.status !== 'paga');
-        upcomingInvoices.value = allInvoices.slice(0, 5); // Limit for UI
-        stats.value.openInvoices = allInvoices.reduce((sum, i) => sum + (parseFloat(i.total_value || 0) - parseFloat(i.paid_value || 0)), 0);
+        const allInvoices = invoicesArrays.flat();
+
+        if (viewMode.value === 'month') {
+            // Month mode: find invoice where opening_date is in the selected month
+            const periodStart = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-01`;
+            const lastDay = new Date(selectedYear.value, selectedMonth.value, 0).getDate();
+            const periodEnd = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${lastDay}`;
+
+            // Current invoice: fatura cujo período de abertura (lançamentos) está no mês visualizado
+            // Isso significa: opening_date no mês OU devido no mês seguinte (reference_month = mês selecionado + 1 ou mês atual com vencimento no próximo)
+            currentInvoice.value = allInvoices.find(inv => {
+                // Se opening_date está disponível, usar
+                if (inv.opening_date) {
+                    return inv.opening_date >= periodStart && inv.opening_date <= periodEnd;
+                }
+                // Fallback: invoice que vence no mês SEGUINTE pertence ao mês de compra ATUAL
+                // reference_month é o mês de referência para lançamentos, não vencimento
+                return inv.reference_month === `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
+            }) || null;
+            
+            // Previous invoice: fatura do mês anterior
+            const prevMonth = selectedMonth.value === 1 ? 12 : selectedMonth.value - 1;
+            const prevYear = selectedMonth.value === 1 ? selectedYear.value - 1 : selectedYear.value;
+            const prevReference = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+            
+            previousInvoice.value = allInvoices.find(inv => 
+                inv.reference_month === prevReference
+            ) || null;
+
+            // Calculate open invoices total (from current invoice if exists)
+            const openAmount = currentInvoice.value 
+                ? parseFloat(currentInvoice.value.total_value || 0) - parseFloat(currentInvoice.value.paid_value || 0)
+                : 0;
+            stats.value.openInvoices = openAmount;
+        } else {
+            // Year mode: sum all unpaid invoices for the year
+            const yearInvoices = allInvoices.filter(i => 
+                i.reference_month && i.reference_month.startsWith(`${selectedYear.value}-`) && i.status !== 'paga'
+            );
+            upcomingInvoices.value = yearInvoices.slice(0, 5);
+            stats.value.openInvoices = yearInvoices.reduce((sum, i) => sum + (parseFloat(i.total_value || 0) - parseFloat(i.paid_value || 0)), 0);
+            
+            // In year mode, show most recent current invoice
+            currentInvoice.value = yearInvoices[0] || null;
+            previousInvoice.value = null;
+        }
 
         // Calculate predicted balance (current balance + projected recurrences - open invoices)
         const currentDate = new Date();

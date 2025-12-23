@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\TransactionAttachmentController;
 use App\Http\Controllers\Api\RecurringTransactionController;
 use App\Http\Controllers\Api\BudgetController;
+use App\Http\Controllers\Api\GeneralBudgetController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ImportController;
@@ -79,9 +80,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Categories
     Route::apiResource('categories', CategoryController::class)->except(['show']);
 
-    // Budgets (Orçamentos)
+    // Budgets (Orçamentos por Categoria)
     Route::apiResource('budgets', BudgetController::class)->except(['show']);
     Route::get('budgets/summary', [BudgetController::class, 'summary']);
+
+    // General Budgets (Orçamento Geral)
+    Route::apiResource('general-budgets', GeneralBudgetController::class);
+    Route::get('general-budgets-current', [GeneralBudgetController::class, 'current']);
+
 
     // Goals (Objetivos)
     Route::apiResource('goals', GoalController::class);

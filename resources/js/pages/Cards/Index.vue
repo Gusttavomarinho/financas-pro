@@ -60,7 +60,7 @@
 
                 <!-- Card name and holder -->
                 <div class="mb-4" :class="{ 'mt-6': card.status === 'arquivado' }">
-                    <p class="text-sm opacity-80">{{ card.bank }}</p>
+                    <p class="text-sm opacity-80">{{ card.account?.bank || card.account?.name || '' }}</p>
                     <h3 class="text-xl font-bold">{{ card.name }}</h3>
                 </div>
 
@@ -154,7 +154,7 @@
                     >
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <p class="text-sm opacity-80">{{ selectedCard.bank }}</p>
+                                <p class="text-sm opacity-80">{{ selectedCard.account?.bank || selectedCard.account?.name || '' }}</p>
                                 <h3 class="text-lg font-bold">{{ selectedCard.name }}</h3>
                             </div>
                             <span class="text-sm font-medium uppercase opacity-80">{{ selectedCard.brand }}</span>

@@ -59,7 +59,57 @@
             </span>
         </DismissableBanner>
 
-        <!-- Totals summary -->
+        <!-- General Budget Card -->
+        <div v-if="generalBudget" class="card mb-6 border-2 border-primary-200 dark:border-primary-800">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ generalBudget.name }}</h3>
+                        <p class="text-sm text-gray-500">
+                            {{ formatCurrency(generalBudget.spent) }} de {{ formatCurrency(generalBudget.amount) }}
+                            <span class="ml-2">• {{ generalBudget.type === 'mensal' ? 'Mensal' : 'Anual' }}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span :class="getGeneralBudgetStatusClass(generalBudget.status)">
+                        {{ getGeneralBudgetStatusLabel(generalBudget.status) }}
+                    </span>
+                    <button @click="openGeneralBudgetModal" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Progress bar -->
+            <div class="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                    class="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                    :class="getGeneralProgressBarClass(generalBudget.status)"
+                    :style="{ width: Math.min(generalBudget.percentage, 100) + '%' }"
+                ></div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 text-right">{{ Math.round(generalBudget.percentage) }}% utilizado</p>
+        </div>
+
+        <!-- No General Budget - Option to create -->
+        <div v-else class="card mb-6 border-2 border-dashed border-gray-200 dark:border-gray-700 text-center py-6">
+            <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <p class="text-gray-500 mb-3">Defina um orçamento geral para controlar seus gastos totais</p>
+            <button @click="openGeneralBudgetModal" class="btn-primary btn-sm">
+                + Criar Orçamento Geral
+            </button>
+        </div>
+
+        <!-- Totals summary (Category Budgets) -->
         <div v-if="totals && budgets.length > 0" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="card text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Total Orçado</p>
@@ -327,6 +377,55 @@ const form = ref({
 const loading = computed(() => budgetsStore.loading);
 const budgets = computed(() => budgetsStore.budgets);
 const totals = computed(() => budgetsStore.totals);
+const generalBudget = ref(null);
+
+// General Budget helper functions
+function getGeneralBudgetStatusClass(status) {
+    const classes = {
+        within: 'badge badge-green',
+        warning: 'badge badge-yellow',
+        exceeded: 'badge badge-red',
+    };
+    return classes[status] || 'badge';
+}
+
+function getGeneralBudgetStatusLabel(status) {
+    const labels = {
+        within: 'Dentro do limite',
+        warning: 'Atenção',
+        exceeded: 'Estourado',
+    };
+    return labels[status] || status;
+}
+
+function getGeneralProgressBarClass(status) {
+    const classes = {
+        within: 'bg-green-500',
+        warning: 'bg-yellow-500',
+        exceeded: 'bg-red-500',
+    };
+    return classes[status] || 'bg-primary-500';
+}
+
+async function loadGeneralBudget() {
+    try {
+        const response = await fetch('/api/general-budgets-current', {
+            headers: { 'Accept': 'application/json' },
+        });
+        if (response.ok) {
+            const data = await response.json();
+            // Show monthly budget if available, otherwise annual
+            generalBudget.value = data.data?.monthly || data.data?.annual || null;
+        }
+    } catch (e) {
+        console.error('Error loading general budget:', e);
+    }
+}
+
+function openGeneralBudgetModal() {
+    // TODO: Implement modal for creating/editing general budget
+    alert('Funcionalidade de modal para Orçamento Geral em desenvolvimento. Use a API diretamente por enquanto.');
+}
 
 // Current period string
 const currentPeriod = computed(() => {
@@ -464,5 +563,6 @@ watch(periodType, (newType) => {
 
 onMounted(() => {
     loadData();
+    loadGeneralBudget();
 });
 </script>

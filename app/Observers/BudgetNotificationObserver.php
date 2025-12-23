@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Transaction;
 use App\Models\Budget;
+use App\Models\GeneralBudget;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Carbon\Carbon;
@@ -22,11 +23,16 @@ class BudgetNotificationObserver
     public function created(Transaction $transaction): void
     {
         // Only check for expenses
-        if ($transaction->type !== 'despesa' || !$transaction->category_id) {
+        if ($transaction->type !== 'despesa') {
             return;
         }
 
-        $this->checkBudgetThreshold($transaction);
+        if ($transaction->category_id) {
+            $this->checkBudgetThreshold($transaction);
+        }
+
+        // Also check general budgets
+        $this->checkGeneralBudgetThreshold($transaction);
     }
 
     /**
@@ -35,17 +41,21 @@ class BudgetNotificationObserver
     public function updated(Transaction $transaction): void
     {
         // Only check if value or category changed and it's an expense
-        if ($transaction->type !== 'despesa' || !$transaction->category_id) {
+        if ($transaction->type !== 'despesa') {
             return;
         }
 
-        if ($transaction->wasChanged(['value', 'category_id'])) {
+        if ($transaction->wasChanged(['value', 'category_id']) && $transaction->category_id) {
             $this->checkBudgetThreshold($transaction);
+        }
+
+        if ($transaction->wasChanged(['value'])) {
+            $this->checkGeneralBudgetThreshold($transaction);
         }
     }
 
     /**
-     * Check budget threshold and send notifications.
+     * Check category budget threshold and send notifications.
      */
     private function checkBudgetThreshold(Transaction $transaction): void
     {
@@ -101,6 +111,71 @@ class BudgetNotificationObserver
                 "Atenção: você já utilizou " . round($percentage) . "% do orçamento de {$categoryName} em {$monthName}.",
                 ['category_id' => $categoryId, 'percentage' => round($percentage), 'spent' => $totalSpent, 'limit' => $budget->amount]
             );
+        }
+    }
+
+    /**
+     * Check general budget threshold and send notifications.
+     */
+    private function checkGeneralBudgetThreshold(Transaction $transaction): void
+    {
+        $userId = $transaction->user_id;
+        $date = Carbon::parse($transaction->date);
+        $month = $date->month;
+        $year = $date->year;
+
+        // Check monthly general budget
+        $monthlyBudget = GeneralBudget::where('user_id', $userId)
+            ->where('type', 'mensal')
+            ->where('month', $month)
+            ->where('year', $year)
+            ->where('is_active', true)
+            ->first();
+
+        if ($monthlyBudget) {
+            $this->checkGeneralThreshold($monthlyBudget, $date);
+        }
+
+        // Check annual general budget
+        $annualBudget = GeneralBudget::where('user_id', $userId)
+            ->where('type', 'anual')
+            ->where('year', $year)
+            ->where('is_active', true)
+            ->first();
+
+        if ($annualBudget) {
+            $this->checkGeneralThreshold($annualBudget, $date);
+        }
+    }
+
+    private function checkGeneralThreshold(GeneralBudget $budget, Carbon $date): void
+    {
+        $percentage = $budget->percentage;
+        $periodName = $budget->type === 'mensal'
+            ? $date->translatedFormat('F')
+            : $budget->year;
+
+        // 100% threshold
+        if ($percentage >= 100 && !$budget->alert_100_sent) {
+            $this->notificationService->create(
+                $budget->user_id,
+                Notification::TYPE_BUDGET_EXCEEDED,
+                'Orçamento Geral estourado',
+                "Seu orçamento geral de {$periodName} foi excedido.",
+                ['general_budget_id' => $budget->id, 'percentage' => round($percentage), 'spent' => $budget->spent, 'limit' => $budget->amount]
+            );
+            $budget->update(['alert_100_sent' => true]);
+        }
+        // 80% threshold
+        elseif ($percentage >= 80 && !$budget->alert_80_sent) {
+            $this->notificationService->create(
+                $budget->user_id,
+                Notification::TYPE_BUDGET_WARNING,
+                'Orçamento Geral em risco',
+                "Atenção: você já utilizou " . round($percentage) . "% do orçamento geral de {$periodName}.",
+                ['general_budget_id' => $budget->id, 'percentage' => round($percentage), 'spent' => $budget->spent, 'limit' => $budget->amount]
+            );
+            $budget->update(['alert_80_sent' => true]);
         }
     }
 

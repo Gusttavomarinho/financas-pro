@@ -39,47 +39,21 @@
                     <p class="mt-1 text-xs text-gray-500">A fatura será paga através desta conta</p>
                 </div>
 
-                <!-- Bank and Brand Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="bank" class="label">Banco *</label>
-                        <input
-                            id="bank"
-                            v-model="form.bank"
-                            type="text"
-                            required
-                            class="input"
-                            placeholder="Nubank, Itaú..."
-                            list="banks"
-                        />
-                        <datalist id="banks">
-                            <option value="Nubank" />
-                            <option value="Itaú" />
-                            <option value="Bradesco" />
-                            <option value="Santander" />
-                            <option value="Banco do Brasil" />
-                            <option value="Caixa Econômica" />
-                            <option value="Inter" />
-                            <option value="C6 Bank" />
-                            <option value="Original" />
-                            <option value="Next" />
-                            <option value="Neon" />
-                        </datalist>
-                    </div>
-                    <div>
-                        <label for="brand" class="label">Bandeira *</label>
-                        <select id="brand" v-model="form.brand" required class="input">
-                            <option value="">Selecione...</option>
-                            <option value="visa">Visa</option>
-                            <option value="mastercard">Mastercard</option>
-                            <option value="elo">Elo</option>
-                            <option value="amex">American Express</option>
-                            <option value="hipercard">Hipercard</option>
-                            <option value="diners">Diners Club</option>
-                            <option value="discover">Discover</option>
-                        </select>
-                    </div>
+                <!-- Brand -->
+                <div>
+                    <label for="brand" class="label">Bandeira *</label>
+                    <select id="brand" v-model="form.brand" required class="input">
+                        <option value="">Selecione...</option>
+                        <option value="visa">Visa</option>
+                        <option value="mastercard">Mastercard</option>
+                        <option value="elo">Elo</option>
+                        <option value="amex">American Express</option>
+                        <option value="hipercard">Hipercard</option>
+                        <option value="diners">Diners Club</option>
+                        <option value="discover">Discover</option>
+                    </select>
                 </div>
+
 
                 <!-- Holder and Last 4 digits -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -210,7 +184,6 @@ const accounts = computed(() => accountsStore.accounts.filter(a => a.status !== 
 const form = reactive({
     name: '',
     account_id: '',
-    bank: '',
     brand: '',
     holder_name: '',
     last_4_digits: '',
@@ -267,7 +240,6 @@ onMounted(async () => {
             if (card) {
                 form.name = card.name || '';
                 form.account_id = card.account_id || '';
-                form.bank = card.bank || '';
                 form.brand = card.brand || '';
                 form.holder_name = card.holder_name || '';
                 form.last_4_digits = card.last_4_digits || '';
