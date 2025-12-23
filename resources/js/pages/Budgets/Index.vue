@@ -283,7 +283,7 @@
         </div>
 
         <!-- Create/Edit Modal -->
-        <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="closeModal">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -364,7 +364,7 @@
         </div>
 
         <!-- Delete Confirmation Modal -->
-        <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showDeleteModal = false">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -389,7 +389,7 @@
         </div>
 
         <!-- General Budget Modal -->
-        <div v-if="showGeneralBudgetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showGeneralBudgetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showGeneralBudgetModal = false">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -469,7 +469,7 @@
         </div>
 
         <!-- Delete General Budget Confirmation Modal -->
-        <div v-if="showDeleteGeneralBudgetConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showDeleteGeneralBudgetConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showDeleteGeneralBudgetConfirm = false">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -495,7 +495,7 @@
         </div>
 
         <!-- Transaction History Modal -->
-        <div v-if="showTransactionHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showTransactionHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showTransactionHistoryModal = false">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                 <div class="flex items-center justify-between p-6 border-b dark:border-gray-700">
                     <div>
@@ -580,7 +580,7 @@
         </div>
 
         <!-- Category Budget History Modal -->
-        <div v-if="showCategoryHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div v-if="showCategoryHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showCategoryHistoryModal = false">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                 <div class="flex items-center justify-between p-6 border-b dark:border-gray-700">
                     <div class="flex items-center gap-3">

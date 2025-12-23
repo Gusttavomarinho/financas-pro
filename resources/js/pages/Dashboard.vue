@@ -211,6 +211,92 @@
                 </div>
             </div>
         </div>
+
+        <!-- Budget Overview Card -->
+        <div class="grid grid-cols-1 gap-6 mt-6">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Orçamentos do Período</h3>
+                    <RouterLink to="/budgets" class="text-sm text-primary-600 hover:text-primary-700">
+                        Ver todos
+                    </RouterLink>
+                </div>
+
+                <!-- General Budget Section -->
+                <div v-if="generalBudget" class="mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Orçamento Geral</p>
+                    <RouterLink to="/budgets" class="block p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg">
+                                    📊
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ generalBudget.name }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ formatCurrency(generalBudgetSpent) }} de {{ formatCurrency(generalBudget.limit_value) }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span :class="getGeneralBudgetStatusClass(generalBudgetStatus)">
+                                {{ generalBudgetStatus === 'exceeded' ? 'Estourado' : generalBudgetStatus === 'warning' ? 'Atenção' : 'OK' }}
+                            </span>
+                        </div>
+                        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full transition-all duration-300"
+                                :class="generalBudgetStatus === 'exceeded' ? 'bg-red-500' : generalBudgetStatus === 'warning' ? 'bg-yellow-500' : 'bg-green-500'"
+                                :style="{ width: Math.min(generalBudgetPercentage, 100) + '%' }"
+                            ></div>
+                        </div>
+                    </RouterLink>
+                </div>
+
+                <!-- Category Budgets Section -->
+                <div v-if="categoryBudgets.length > 0">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Por Categoria</p>
+                    <div class="space-y-2">
+                        <RouterLink 
+                            v-for="budget in categoryBudgets.slice(0, 3)"
+                            :key="budget.id"
+                            to="/budgets"
+                            class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+                                 :style="{ backgroundColor: budget.category?.color || '#6B7280' }">
+                                {{ budget.category?.icon || '📊' }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                        {{ budget.category?.name }}
+                                    </p>
+                                    <span class="text-xs text-gray-500">
+                                        {{ Math.round(budget.usage_percentage || 0) }}%
+                                    </span>
+                                </div>
+                                <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
+                                    <div 
+                                        class="h-full transition-all duration-300"
+                                        :class="budget.status === 'exceeded' ? 'bg-red-500' : budget.status === 'atenção' ? 'bg-yellow-500' : 'bg-green-500'"
+                                        :style="{ width: Math.min(budget.usage_percentage || 0, 100) + '%' }"
+                                    ></div>
+                                </div>
+                            </div>
+                        </RouterLink>
+                    </div>
+                    <p v-if="categoryBudgets.length > 3" class="text-xs text-gray-400 mt-2 text-center">
+                        +{{ categoryBudgets.length - 3 }} outros orçamentos
+                    </p>
+                </div>
+
+                <div v-if="!generalBudget && categoryBudgets.length === 0" class="text-center py-8 text-gray-500">
+                    <RouterLink to="/budgets" class="text-primary-600 hover:underline">
+                        Criar primeiro orçamento →
+                    </RouterLink>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -260,6 +346,58 @@ const currentInvoice = ref(null);
 const previousInvoice = ref(null);
 const categoryData = ref({ labels: [], data: [] });
 const loading = ref(false);
+
+// Budget data
+const generalBudget = ref(null);
+const categoryBudgets = ref([]);
+
+// General budget computed values
+const generalBudgetSpent = computed(() => {
+    if (!generalBudget.value?.current_period) return 0;
+    return parseFloat(generalBudget.value.current_period.spent) || 0;
+});
+
+const generalBudgetPercentage = computed(() => {
+    if (!generalBudget.value) return 0;
+    const limit = parseFloat(generalBudget.value.limit_value) || 1;
+    return (generalBudgetSpent.value / limit) * 100;
+});
+
+const generalBudgetStatus = computed(() => {
+    const pct = generalBudgetPercentage.value;
+    if (pct >= 100) return 'exceeded';
+    if (pct >= 80) return 'warning';
+    return 'ok';
+});
+
+function getGeneralBudgetStatusClass(status) {
+    const classes = {
+        ok: 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+        warning: 'text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+        exceeded: 'text-xs px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    };
+    return classes[status] || classes.ok;
+}
+
+async function loadBudgetData() {
+    try {
+        // Load general budgets
+        const generalResponse = await axios.get('/api/general-budgets-current');
+        const generalBudgets = generalResponse.data.data || [];
+        // Get first active monthly budget for display
+        generalBudget.value = generalBudgets.find(b => b.period_type === 'monthly' && b.status === 'active') 
+                          || generalBudgets.find(b => b.status === 'active')
+                          || generalBudgets[0] 
+                          || null;
+
+        // Load category budgets for current period
+        const period = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
+        const categoryResponse = await axios.get('/api/budgets/summary', { params: { period } });
+        categoryBudgets.value = categoryResponse.data.data || [];
+    } catch (e) {
+        console.error('Error loading budget data:', e);
+    }
+}
 
 function getStatusLabel(status) {
     const labels = {
@@ -534,6 +672,9 @@ async function loadDashboardData() {
             labels: Object.keys(categoryBreakdown),
             data: Object.values(categoryBreakdown),
         };
+
+        // Load budget data
+        await loadBudgetData();
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     } finally {
@@ -544,6 +685,7 @@ async function loadDashboardData() {
 // Handle period change
 async function onPeriodChange({ month, year }) {
     await loadDashboardData();
+    await loadBudgetData();
     await updateCharts();
 }
 
