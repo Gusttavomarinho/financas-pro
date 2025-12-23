@@ -342,6 +342,108 @@
                 </div>
             </div>
         </div>
+
+        <!-- General Budget Modal -->
+        <div v-if="showGeneralBudgetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                        {{ generalBudget ? 'Editar' : 'Criar' }} Orçamento Geral
+                    </h3>
+                    <button @click="showGeneralBudgetModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="saveGeneralBudget" class="space-y-4">
+                    <!-- Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Nome (opcional)
+                        </label>
+                        <input 
+                            v-model="generalBudgetForm.name" 
+                            type="text" 
+                            class="input" 
+                            placeholder="Orçamento Geral"
+                        />
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Valor Limite *
+                        </label>
+                        <MoneyInput v-model="generalBudgetForm.amount" />
+                    </div>
+
+                    <!-- Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Tipo *
+                        </label>
+                        <div class="flex gap-3">
+                            <label class="flex-1">
+                                <input type="radio" v-model="generalBudgetForm.type" value="mensal" class="sr-only peer" />
+                                <div class="p-3 border rounded-lg text-center cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <span class="font-medium">Mensal</span>
+                                </div>
+                            </label>
+                            <label class="flex-1">
+                                <input type="radio" v-model="generalBudgetForm.type" value="anual" class="sr-only peer" />
+                                <div class="p-3 border rounded-lg text-center cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <span class="font-medium">Anual</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Month (only for mensal) -->
+                    <div v-if="generalBudgetForm.type === 'mensal'" class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mês</label>
+                            <select v-model="generalBudgetForm.month" class="input">
+                                <option v-for="m in 12" :key="m" :value="m">{{ getMonthName(m) }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ano</label>
+                            <select v-model="generalBudgetForm.year" class="input">
+                                <option v-for="y in [2024, 2025, 2026]" :key="y" :value="y">{{ y }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Year only (for anual) -->
+                    <div v-else>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ano</label>
+                        <select v-model="generalBudgetForm.year" class="input">
+                            <option v-for="y in [2024, 2025, 2026]" :key="y" :value="y">{{ y }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Include all categories -->
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <input type="checkbox" v-model="generalBudgetForm.include_future_categories" id="include_future" class="w-4 h-4" />
+                        <label for="include_future" class="text-sm text-gray-700 dark:text-gray-300">
+                            Incluir automaticamente novas categorias
+                        </label>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" @click="showGeneralBudgetModal = false" class="btn btn-secondary flex-1">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-1" :disabled="savingGeneralBudget">
+                            {{ savingGeneralBudget ? 'Salvando...' : (generalBudget ? 'Salvar' : 'Criar') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -422,9 +524,94 @@ async function loadGeneralBudget() {
     }
 }
 
+// General Budget Modal state
+const showGeneralBudgetModal = ref(false);
+const savingGeneralBudget = ref(false);
+const generalBudgetForm = ref({
+    name: '',
+    amount: 0,
+    type: 'mensal',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    include_future_categories: true,
+});
+
 function openGeneralBudgetModal() {
-    // TODO: Implement modal for creating/editing general budget
-    alert('Funcionalidade de modal para Orçamento Geral em desenvolvimento. Use a API diretamente por enquanto.');
+    // If editing, populate form with existing values
+    if (generalBudget.value) {
+        generalBudgetForm.value = {
+            name: generalBudget.value.name || '',
+            amount: parseFloat(generalBudget.value.amount) || 0,
+            type: generalBudget.value.type || 'mensal',
+            month: generalBudget.value.month || new Date().getMonth() + 1,
+            year: generalBudget.value.year || new Date().getFullYear(),
+            include_future_categories: generalBudget.value.include_future_categories ?? true,
+        };
+    } else {
+        // Reset form for new budget
+        generalBudgetForm.value = {
+            name: '',
+            amount: 0,
+            type: 'mensal',
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            include_future_categories: true,
+        };
+    }
+    showGeneralBudgetModal.value = true;
+}
+
+async function saveGeneralBudget() {
+    savingGeneralBudget.value = true;
+    try {
+        const payload = {
+            name: generalBudgetForm.value.name || 'Orçamento Geral',
+            amount: generalBudgetForm.value.amount,
+            type: generalBudgetForm.value.type,
+            year: generalBudgetForm.value.year,
+            include_future_categories: generalBudgetForm.value.include_future_categories,
+        };
+        
+        if (generalBudgetForm.value.type === 'mensal') {
+            payload.month = generalBudgetForm.value.month;
+        }
+
+        let response;
+        if (generalBudget.value) {
+            // Update existing
+            response = await fetch(`/api/general-budgets/${generalBudget.value.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+        } else {
+            // Create new
+            response = await fetch('/api/general-budgets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+        }
+
+        if (response.ok) {
+            showGeneralBudgetModal.value = false;
+            await loadGeneralBudget();
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Erro ao salvar orçamento geral');
+        }
+    } catch (e) {
+        console.error('Error saving general budget:', e);
+        alert('Erro ao salvar orçamento geral');
+    } finally {
+        savingGeneralBudget.value = false;
+    }
+}
+
+function getMonthName(month) {
+    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return months[month - 1];
 }
 
 // Current period string
