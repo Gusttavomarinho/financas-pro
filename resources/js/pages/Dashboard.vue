@@ -431,26 +431,43 @@ async function loadDashboardData() {
             const lastDay = new Date(selectedYear.value, selectedMonth.value, 0).getDate();
             const periodEnd = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${lastDay}`;
 
-            // Current invoice: fatura cujo período de abertura (lançamentos) está no mês visualizado
-            // Isso significa: opening_date no mês OU devido no mês seguinte (reference_month = mês selecionado + 1 ou mês atual com vencimento no próximo)
+            // =====================================================
+            // LÓGICA DE COMPETÊNCIA (mês dos lançamentos):
+            // A fatura atual é aquela cujo período de compras (period_start a period_end)
+            // inclui o mês selecionado, independentemente de quando vence.
+            // =====================================================
+            
             currentInvoice.value = allInvoices.find(inv => {
-                // Se opening_date está disponível, usar
-                if (inv.opening_date) {
-                    return inv.opening_date >= periodStart && inv.opening_date <= periodEnd;
+                // Prioridade 1: Usar period_start/period_end se disponíveis
+                if (inv.period_start && inv.period_end) {
+                    // Verifica se o mês selecionado tem interseção com o período da fatura
+                    const invStart = inv.period_start.split('T')[0]; // Remove time part
+                    const invEnd = inv.period_end.split('T')[0];
+                    // O mês selecionado está dentro do período de competência da fatura?
+                    return invStart <= periodEnd && invEnd >= periodStart;
                 }
-                // Fallback: invoice que vence no mês SEGUINTE pertence ao mês de compra ATUAL
-                // reference_month é o mês de referência para lançamentos, não vencimento
+                
+                // Fallback: reference_month representa o mês de competência
                 return inv.reference_month === `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
             }) || null;
             
-            // Previous invoice: fatura do mês anterior
+            // FATURA ANTERIOR: fatura com competência no mês anterior
             const prevMonth = selectedMonth.value === 1 ? 12 : selectedMonth.value - 1;
             const prevYear = selectedMonth.value === 1 ? selectedYear.value - 1 : selectedYear.value;
-            const prevReference = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+            const prevPeriodStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+            const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
+            const prevPeriodEnd = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${prevLastDay}`;
             
-            previousInvoice.value = allInvoices.find(inv => 
-                inv.reference_month === prevReference
-            ) || null;
+            previousInvoice.value = allInvoices.find(inv => {
+                // Prioridade 1: Usar period_start/period_end
+                if (inv.period_start && inv.period_end) {
+                    const invStart = inv.period_start.split('T')[0];
+                    const invEnd = inv.period_end.split('T')[0];
+                    return invStart <= prevPeriodEnd && invEnd >= prevPeriodStart;
+                }
+                // Fallback: reference_month
+                return inv.reference_month === `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+            }) || null;
 
             // Calculate open invoices total (from current invoice if exists)
             const openAmount = currentInvoice.value 
@@ -459,9 +476,13 @@ async function loadDashboardData() {
             stats.value.openInvoices = openAmount;
         } else {
             // Year mode: sum all unpaid invoices for the year
-            const yearInvoices = allInvoices.filter(i => 
-                i.reference_month && i.reference_month.startsWith(`${selectedYear.value}-`) && i.status !== 'paga'
-            );
+            const yearInvoices = allInvoices.filter(i => {
+                // Filter by period_start year if available
+                if (i.period_start) {
+                    return i.period_start.startsWith(`${selectedYear.value}-`) && i.status !== 'paga';
+                }
+                return i.reference_month && i.reference_month.startsWith(`${selectedYear.value}-`) && i.status !== 'paga';
+            });
             upcomingInvoices.value = yearInvoices.slice(0, 5);
             stats.value.openInvoices = yearInvoices.reduce((sum, i) => sum + (parseFloat(i.total_value || 0) - parseFloat(i.paid_value || 0)), 0);
             
