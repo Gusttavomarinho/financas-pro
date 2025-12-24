@@ -80,7 +80,7 @@ class RecurringTransaction extends Model
     // ============ HELPERS ============
 
     /**
-     * Verifica se deve gerar transação
+     * Verifica se deve gerar transação (para processamento automático)
      */
     public function shouldGenerate(): bool
     {
@@ -88,8 +88,8 @@ class RecurringTransaction extends Model
     }
 
     /**
-     * Retorna o motivo pelo qual a recorrência não pode ser gerada agora,
-     * ou null se pode gerar.
+     * Retorna o motivo pelo qual a recorrência não pode ser gerada AUTOMATICAMENTE,
+     * ou null se pode gerar. Usado pelo job/cron.
      */
     public function getBlockReason(): ?string
     {
@@ -98,7 +98,7 @@ class RecurringTransaction extends Model
             return "Recorrência está com status '{$this->status}'. Apenas recorrências ativas podem gerar transações.";
         }
 
-        // Não gerar se já gerou hoje
+        // Não gerar se já gerou hoje (evita duplicação no mesmo dia)
         if ($this->last_generated_at && $this->last_generated_at->isToday()) {
             return "Já foi gerada uma transação hoje ({$this->last_generated_at->format('d/m/Y')}). Aguarde até amanhã.";
         }
@@ -109,6 +109,27 @@ class RecurringTransaction extends Model
         }
 
         // Não gerar se passou do end_date
+        if ($this->end_date && $this->next_occurrence->gt($this->end_date)) {
+            return "A recorrência passou da data de término ({$this->end_date->format('d/m/Y')}).";
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna o motivo pelo qual a recorrência não pode ser gerada MANUALMENTE,
+     * ou null se pode gerar. Usado pelo botão "Gerar Agora".
+     * 
+     * Geração manual é mais permissiva: apenas bloqueia se pausada/encerrada.
+     */
+    public function getBlockReasonForManual(): ?string
+    {
+        // Não gerar se pausada ou encerrada
+        if ($this->status !== 'ativa') {
+            return "Recorrência está com status '{$this->status}'. Retome a recorrência antes de gerar.";
+        }
+
+        // Não gerar se passou do end_date e já encerrou
         if ($this->end_date && $this->next_occurrence->gt($this->end_date)) {
             return "A recorrência passou da data de término ({$this->end_date->format('d/m/Y')}).";
         }

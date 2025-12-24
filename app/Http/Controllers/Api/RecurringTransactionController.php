@@ -204,7 +204,8 @@ class RecurringTransactionController extends Controller
         }
 
         try {
-            $transaction = $service->generateTransaction($recurring);
+            // forceManual=true: botão "Gerar Agora" usa validação permissiva
+            $transaction = $service->generateTransaction($recurring, forceManual: true);
 
             return response()->json([
                 'message' => 'Transação gerada com sucesso!',

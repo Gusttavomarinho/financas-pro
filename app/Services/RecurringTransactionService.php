@@ -56,12 +56,20 @@ class RecurringTransactionService
 
     /**
      * Gera a transação atual e agenda a próxima
+     * 
+     * @param bool $forceManual Se true, usa validação permissiva (só bloqueia por status).
+     *                          Usado pelo botão "Gerar Agora" na UI.
      */
-    public function generateTransaction(RecurringTransaction $recurring): Transaction
+    public function generateTransaction(RecurringTransaction $recurring, bool $forceManual = false): Transaction
     {
-        return DB::transaction(function () use ($recurring) {
-            // 1. Validar se ainda deve gerar (double check)
-            $blockReason = $recurring->getBlockReason();
+        return DB::transaction(function () use ($recurring, $forceManual) {
+            // 1. Validar se ainda deve gerar
+            // Para geração manual: só bloqueia por status
+            // Para automático: bloqueia por status + data + duplicação
+            $blockReason = $forceManual
+                ? $recurring->getBlockReasonForManual()
+                : $recurring->getBlockReason();
+
             if ($blockReason !== null) {
                 throw new \Exception($blockReason);
             }
