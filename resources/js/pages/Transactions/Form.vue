@@ -290,6 +290,53 @@
                 :transaction-id="isEditing ? route.params.id : null"
             />
 
+            <!-- Section 6: Credit Purchase Summary (only for credit expenses) -->
+            <div v-if="form.type === 'despesa' && form.payment_method === 'credito' && form.card_id && form.value > 0" class="card mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-800">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <h2 class="text-lg font-semibold text-purple-900 dark:text-purple-100">Resumo da Compra no Crédito</h2>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Cartão</p>
+                        <p class="font-semibold text-gray-900 dark:text-white">{{ selectedCardName }}</p>
+                    </div>
+                    <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total</p>
+                        <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(form.value) }}</p>
+                    </div>
+                    <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Parcelas</p>
+                        <p class="font-semibold text-gray-900 dark:text-white">{{ form.installments || 1 }}x</p>
+                    </div>
+                    <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor da Parcela</p>
+                        <p class="font-semibold text-purple-600 dark:text-purple-400">{{ formatCurrency((form.value || 0) / (form.installments || 1)) }}</p>
+                    </div>
+                </div>
+
+                <!-- Invoice Preview -->
+                <div class="bg-white/80 dark:bg-gray-800/80 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <div class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                {{ invoicePreviewText }}
+                            </p>
+                            <p v-if="form.installments > 1" class="text-sm text-gray-500 mt-1">
+                                Primeira parcela na fatura de {{ invoicePreviewMonth }}. 
+                                Última parcela na fatura de {{ lastInstallmentMonth }}.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="flex gap-3">
                 <button type="submit" class="btn-primary flex-1 py-3" :disabled="loading">
@@ -366,6 +413,80 @@ const expenseCategories = computed(() => {
 
 const activeAccounts = computed(() => {
     return accountsStore.accounts.filter(a => a.status === 'active' || (isEditing.value && (a.id === form.account_id || a.id === form.from_account_id)));
+});
+
+// Credit card purchase summary helpers
+const selectedCard = computed(() => {
+    if (!form.card_id) return null;
+    return cardsStore.cards.find(c => c.id === form.card_id);
+});
+
+const selectedCardName = computed(() => {
+    return selectedCard.value?.name || 'Cartão não selecionado';
+});
+
+// Calculate which invoice the purchase will be posted to
+const invoicePreviewMonth = computed(() => {
+    if (!selectedCard.value || !form.date) return '';
+    
+    const purchaseDate = new Date(form.date + 'T00:00:00');
+    const closingDay = selectedCard.value.closing_day || 1;
+    
+    let invoiceMonth = purchaseDate.getMonth();
+    let invoiceYear = purchaseDate.getFullYear();
+    
+    // If purchase is after closing day, goes to next month's invoice
+    if (purchaseDate.getDate() > closingDay) {
+        invoiceMonth++;
+        if (invoiceMonth > 11) {
+            invoiceMonth = 0;
+            invoiceYear++;
+        }
+    }
+    
+    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return `${months[invoiceMonth]}/${invoiceYear}`;
+});
+
+const invoicePreviewText = computed(() => {
+    if (!invoicePreviewMonth.value) return 'Selecione um cartão e data para ver a fatura.';
+    
+    if (form.installments > 1) {
+        return `Esta compra será lançada a partir da fatura de ${invoicePreviewMonth.value}.`;
+    }
+    return `Esta compra será lançada na fatura de ${invoicePreviewMonth.value}.`;
+});
+
+const lastInstallmentMonth = computed(() => {
+    if (!selectedCard.value || !form.date || form.installments <= 1) return '';
+    
+    const purchaseDate = new Date(form.date + 'T00:00:00');
+    const closingDay = selectedCard.value.closing_day || 1;
+    
+    let invoiceMonth = purchaseDate.getMonth();
+    let invoiceYear = purchaseDate.getFullYear();
+    
+    // If purchase is after closing day, goes to next month's invoice
+    if (purchaseDate.getDate() > closingDay) {
+        invoiceMonth++;
+        if (invoiceMonth > 11) {
+            invoiceMonth = 0;
+            invoiceYear++;
+        }
+    }
+    
+    // Add remaining installments (minus 1 because first is already counted)
+    const totalMonthsToAdd = (form.installments || 1) - 1;
+    invoiceMonth += totalMonthsToAdd;
+    
+    // Normalize months and years
+    invoiceYear += Math.floor(invoiceMonth / 12);
+    invoiceMonth = invoiceMonth % 12;
+    
+    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return `${months[invoiceMonth]}/${invoiceYear}`;
 });
 
 function formatCurrency(value) {

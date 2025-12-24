@@ -178,16 +178,38 @@
                             </td>
                             <td class="py-3 px-4 text-sm">
                                 <template v-if="transaction.type === 'transferencia'">
-                                    <span class="text-blue-600">Transferência</span>
-                                </template>
-                                <template v-else-if="transaction.account">
-                                    <span :class="{ 'text-gray-400': transaction.account.status === 'archived' }">
-                                        {{ transaction.account.name }}
-                                        <span v-if="transaction.account.status === 'archived'" class="text-xs">(arquivada)</span>
+                                    <span class="inline-flex items-center gap-1.5 text-blue-600" title="Transferência entre contas">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                        </svg>
+                                        Transferência
                                     </span>
                                 </template>
                                 <template v-else-if="transaction.card">
-                                    {{ transaction.card.name }}
+                                    <span 
+                                        class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"
+                                        :title="`Cartão: ${transaction.card.name}`"
+                                    >
+                                        <!-- Card icon (credit card) -->
+                                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                        {{ transaction.card.name }}
+                                    </span>
+                                </template>
+                                <template v-else-if="transaction.account">
+                                    <span 
+                                        class="inline-flex items-center gap-1.5"
+                                        :class="{ 'text-gray-400': transaction.account.status === 'archived' }"
+                                        :title="`Conta: ${transaction.account.name}${transaction.account.status === 'archived' ? ' (arquivada)' : ''}`"
+                                    >
+                                        <!-- Account icon (bank) -->
+                                        <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                                        </svg>
+                                        {{ transaction.account.name }}
+                                        <span v-if="transaction.account.status === 'archived'" class="text-xs">(arq.)</span>
+                                    </span>
                                 </template>
                                 <template v-else>-</template>
                             </td>
