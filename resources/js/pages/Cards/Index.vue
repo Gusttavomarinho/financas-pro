@@ -44,7 +44,12 @@
             >
                 <!-- Archived badge -->
                 <div v-if="card.status === 'arquivado'" class="absolute top-4 left-4 flex items-center gap-2">
-                    <span class="badge badge-gray">Arquivado</span>
+                    <span 
+                        class="badge badge-gray cursor-help"
+                        title="Este cartão está arquivado e não aceita novos lançamentos"
+                    >
+                        Arquivado · Somente leitura
+                    </span>
                     <button 
                         @click.stop="handleUnarchive(card)"
                         class="badge-green cursor-pointer hover:opacity-80"
@@ -217,7 +222,12 @@
                             >
                                 <div>
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ formatMonth(invoice.reference_month) }}</p>
-                                    <span :class="['badge', getStatusBadgeClass(invoice.status)]">{{ getStatusLabel(invoice.status) }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span :class="['badge', getStatusBadgeClass(invoice.status)]">{{ getStatusLabel(invoice.status) }}</span>
+                                        <span v-if="invoice.paid_value > 0 && invoice.status !== 'paga'" class="text-xs text-green-600 font-medium">
+                                            Pago antecipado
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="text-right">
                                     <span class="font-semibold text-gray-900 dark:text-white">
@@ -225,6 +235,9 @@
                                     </span>
                                     <p v-if="invoice.paid_value > 0" class="text-xs text-green-600 font-medium">
                                         Pago: {{ formatCurrency(invoice.paid_value) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Total: {{ formatCurrency(invoice.total_value) }}
                                     </p>
                                 </div>
                             </div>

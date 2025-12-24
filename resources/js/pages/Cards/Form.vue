@@ -51,6 +51,7 @@
                         <option value="hipercard">Hipercard</option>
                         <option value="diners">Diners Club</option>
                         <option value="discover">Discover</option>
+                        <option value="outra">Outra / Não informada</option>
                     </select>
                 </div>
 
