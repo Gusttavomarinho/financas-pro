@@ -18,7 +18,8 @@
 
         <!-- Transparency info banner -->
         <DismissableBanner storage-key="dashboard-calc-info" color="blue" class="mb-4">
-            💡 Os valores consideram os lançamentos pela data da transação, não pela data de vencimento da fatura.
+            <p>💡 Os valores consideram os lançamentos pela data da transação, não pela data de vencimento da fatura.</p>
+            <p class="mt-1">💡 O "Saldo Previsto" inclui despesas de faturas futuras já lançadas.</p>
         </DismissableBanner>
 
         <!-- Stats cards -->
@@ -41,9 +42,6 @@
                     icon="chart"
                     color="purple"
                 />
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 text-center px-2">
-                    💡 Inclui despesas de faturas futuras já lançadas
-                </p>
             </div>
             <RouterLink :to="incomeFilterUrl" class="block">
                 <StatCard

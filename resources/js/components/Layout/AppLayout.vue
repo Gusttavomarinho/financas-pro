@@ -1,9 +1,9 @@
 <template>
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar - Always fixed -->
         <aside
             :class="[
-                'fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto',
+                'fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
                 uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             ]"
         >
@@ -67,10 +67,10 @@
             class="fixed inset-0 bg-black/50 z-30 lg:hidden"
         />
 
-        <!-- Main content -->
-        <div class="flex-1 flex flex-col min-h-screen lg:ml-0">
-            <!-- Top bar -->
-            <header class="sticky top-0 z-20 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 lg:px-6">
+        <!-- Main content wrapper - offset for sidebar on large screens -->
+        <div class="flex-1 flex flex-col h-screen lg:ml-64">
+            <!-- Top bar - Fixed at top of content area -->
+            <header class="sticky top-0 z-20 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 lg:px-6 shrink-0">
                 <button
                     @click="uiStore.toggleSidebar"
                     class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
