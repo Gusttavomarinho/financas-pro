@@ -41,8 +41,11 @@
                     icon="chart"
                     color="purple"
                 />
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 text-center px-2">
+                    💡 Inclui despesas de faturas futuras já lançadas
+                </p>
             </div>
-            <RouterLink to="/transactions?type=receita" class="block">
+            <RouterLink :to="incomeFilterUrl" class="block">
                 <StatCard
                     title="Receitas do Período"
                     :value="formatCurrency(stats.monthIncome)"
@@ -52,7 +55,7 @@
                     clickable
                 />
             </RouterLink>
-            <RouterLink to="/transactions?type=despesa" class="block">
+            <RouterLink :to="expenseFilterUrl" class="block">
                 <StatCard
                     title="Despesas do Período"
                     :value="formatCurrency(stats.monthExpenses)"
@@ -98,16 +101,16 @@
             <div class="card">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transações do Período</h3>
-                    <RouterLink to="/transactions" class="text-sm text-primary-600 hover:text-primary-700">
+                    <RouterLink :to="allTransactionsUrl" class="text-sm text-primary-600 hover:text-primary-700">
                         Ver todas
                     </RouterLink>
                 </div>
                 <div v-if="recentTransactions.length" class="space-y-3">
-                    <RouterLink
+                    <div
                         v-for="transaction in recentTransactions"
                         :key="transaction.id"
-                        :to="`/transactions/${transaction.id}/edit`"
-                        class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        @click="openTransactionDetail(transaction)"
+                        class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                     >
                         <div :class="getTransactionIconClass(transaction)">
                             <svg v-if="transaction.type === 'transferencia'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +132,7 @@
                         <span :class="getTransactionValueClass(transaction)">
                             {{ getTransactionPrefix(transaction) }}{{ formatCurrency(transaction.value) }}
                         </span>
-                    </RouterLink>
+                    </div>
                 </div>
                 <div v-else class="text-center py-8 text-gray-500">
                     Nenhum lançamento ainda
@@ -334,6 +337,81 @@
             </div>
         </div>
     </div>
+
+    <!-- Transaction Detail Modal -->
+    <Teleport to="body">
+        <div v-if="showDetailModal && selectedTransaction" 
+             class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" 
+             @click.self="showDetailModal = false">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Detalhes do Lançamento</h3>
+                    <button @click="showDetailModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="text-center py-4">
+                        <div :class="getModalIconClass(selectedTransaction)" class="w-16 h-16 mx-auto mb-3">
+                            <svg v-if="selectedTransaction.type === 'transferencia'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                            <svg v-else-if="selectedTransaction.type === 'receita'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                            </svg>
+                            <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                            </svg>
+                        </div>
+                        <p class="text-3xl font-bold" :class="getTransactionValueClass(selectedTransaction)">
+                            {{ getTransactionPrefix(selectedTransaction) }}{{ formatCurrency(selectedTransaction.value) }}
+                        </p>
+                        <p class="text-gray-500">{{ selectedTransaction.description }}</p>
+                    </div>
+
+                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Tipo</span>
+                            <span class="font-medium text-gray-900 dark:text-white capitalize">{{ selectedTransaction.type }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Data</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ formatDate(selectedTransaction.date) }}</span>
+                        </div>
+                        <div v-if="selectedTransaction.category" class="flex justify-between">
+                            <span class="text-gray-500">Categoria</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ selectedTransaction.category.name }}</span>
+                        </div>
+                        <div v-if="selectedTransaction.account" class="flex justify-between">
+                            <span class="text-gray-500">Conta</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ selectedTransaction.account.name }}</span>
+                        </div>
+                        <div v-if="selectedTransaction.card" class="flex justify-between">
+                            <span class="text-gray-500">Cartão</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ selectedTransaction.card.name }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
+                    <RouterLink 
+                        :to="`/transactions/${selectedTransaction.id}/edit`" 
+                        class="btn-primary w-full justify-center"
+                        @click="showDetailModal = false"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar Lançamento
+                    </RouterLink>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
 
 <script setup>
@@ -391,6 +469,40 @@ const categoryBudgets = ref([]);
 // Selected period for the current view (based on selectedMonth/selectedYear)
 const selectedMonthlyPeriod = ref(null);
 const selectedAnnualPeriod = ref(null);
+
+// Transaction detail modal
+const showDetailModal = ref(false);
+const selectedTransaction = ref(null);
+
+// Computed URLs for contextual navigation
+const incomeFilterUrl = computed(() => {
+    return `/transactions?type=receita&month=${selectedMonth.value}&year=${selectedYear.value}`;
+});
+
+const expenseFilterUrl = computed(() => {
+    return `/transactions?type=despesa&month=${selectedMonth.value}&year=${selectedYear.value}`;
+});
+
+const allTransactionsUrl = computed(() => {
+    return `/transactions?month=${selectedMonth.value}&year=${selectedYear.value}`;
+});
+
+// Open transaction detail modal
+function openTransactionDetail(transaction) {
+    selectedTransaction.value = transaction;
+    showDetailModal.value = true;
+}
+
+// Modal icon class helper
+function getModalIconClass(transaction) {
+    if (transaction.type === 'transferencia') {
+        return 'rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 flex items-center justify-center';
+    } else if (transaction.type === 'receita') {
+        return 'rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 flex items-center justify-center';
+    } else {
+        return 'rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 flex items-center justify-center';
+    }
+}
 
 // General budget computed values (monthly) - uses selected period
 const generalBudgetSpent = computed(() => {

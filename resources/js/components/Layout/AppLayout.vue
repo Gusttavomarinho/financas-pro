@@ -112,7 +112,7 @@
             </header>
 
             <!-- Page content -->
-            <main class="flex-1 p-4 lg:p-6">
+            <main class="flex-1 p-4 lg:p-6 overflow-y-auto">
                 <slot />
             </main>
         </div>
