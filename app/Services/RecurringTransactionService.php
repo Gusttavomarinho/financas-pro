@@ -57,12 +57,12 @@ class RecurringTransactionService
     /**
      * Gera a transação atual e agenda a próxima
      * 
-     * @param bool $forceManual Se true, usa validação permissiva (só bloqueia por status).
-     *                          Usado pelo botão "Gerar Agora" na UI.
+     * @param bool $forceManual Se true, é geração manual via botão "Gerar Agora" (só bloqueia por status).
+     * @param bool $isDuplicate Se true, é uma geração adicional no mesmo período (duplicata intencional).
      */
-    public function generateTransaction(RecurringTransaction $recurring, bool $forceManual = false): Transaction
+    public function generateTransaction(RecurringTransaction $recurring, bool $forceManual = false, bool $isDuplicate = false): Transaction
     {
-        return DB::transaction(function () use ($recurring, $forceManual) {
+        return DB::transaction(function () use ($recurring, $forceManual, $isDuplicate) {
             // 1. Validar se ainda deve gerar
             // Para geração manual: só bloqueia por status
             // Para automático: bloqueia por status + data + duplicação
@@ -74,21 +74,32 @@ class RecurringTransactionService
                 throw new \Exception($blockReason);
             }
 
-            // 2. Criar Transação
+            // 2. Preparar nota com origem do lançamento
+            $originNote = $forceManual
+                ? "(Gerado manualmente em " . Carbon::now()->format('d/m/Y H:i') . " via Recorrência #{$recurring->id})"
+                : "(Gerado automaticamente via Recorrência #{$recurring->id})";
+
+            if ($isDuplicate) {
+                $originNote .= "\n⚠️ Lançamento manual adicional no mesmo período";
+            }
+
+            // 3. Criar Transação
             $transactionData = [
                 'user_id' => $recurring->user_id,
-                'description' => $recurring->description, // Poderia adicionar sufixo (ex: Jan/2025)
+                'description' => $recurring->description,
                 'value' => $recurring->value,
                 'type' => $recurring->type,
-                'date' => $recurring->next_occurrence, // Data de competência = Data de agendamento
+                'date' => $recurring->next_occurrence,
                 'category_id' => $recurring->category_id,
                 'account_id' => $recurring->account_id,
                 'card_id' => $recurring->card_id,
                 'payment_method' => $recurring->payment_method,
-                'notes' => $recurring->notes . "\n(Gerado automaticamente via Recorrência #{$recurring->id})",
-                'status' => 'confirmada', // Para MVP é confirmada, ou 'pendente'? MVP: Confirmada.
+                'notes' => trim(($recurring->notes ?? '') . "\n" . $originNote),
+                'status' => 'confirmada',
                 'total_installments' => 1,
                 'recurring_transaction_id' => $recurring->id,
+                'generated_manually' => $forceManual,
+                'duplicate_period' => $isDuplicate,
             ];
 
             // Ajuste para compras no crédito: status = confirmada, parcelas = 1

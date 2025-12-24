@@ -581,18 +581,58 @@
                         </div>
                     </div>
 
+                    <!-- Generation Info Section -->
+                    <div v-if="generationInfo" class="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 text-sm border-t border-gray-200 dark:border-gray-700">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-gray-600 dark:text-gray-400">
+                            <div v-if="generationInfo.last_automatic">
+                                <span class="text-xs text-gray-500">Última automática:</span>
+                                <span class="ml-1 font-medium">{{ generationInfo.last_automatic }}</span>
+                            </div>
+                            <div v-if="generationInfo.last_manual">
+                                <span class="text-xs text-gray-500">Última manual:</span>
+                                <span class="ml-1 font-medium text-yellow-600">{{ generationInfo.last_manual }}</span>
+                            </div>
+                            <div v-if="generationInfo.next_occurrence">
+                                <span class="text-xs text-gray-500">Próxima:</span>
+                                <span class="ml-1 font-medium text-primary-600">{{ generationInfo.next_occurrence }}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Modal Footer with Actions -->
                     <div class="flex flex-wrap gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <!-- Gerar Agora - 3 states: normal (blue), alert (yellow), blocked (disabled) -->
                         <button 
-                            v-if="selectedRecurring.status === 'ativa'"
+                            v-if="buttonState !== 'blocked'"
                             @click="openGenerateConfirm(selectedRecurring); closeDetailModal()"
-                            class="flex-1 min-w-[120px] btn-secondary text-blue-600 border-blue-200 hover:bg-blue-50"
+                            :class="[
+                                'flex-1 min-w-[120px] btn-secondary',
+                                buttonState === 'alert' 
+                                    ? 'text-yellow-600 border-yellow-200 hover:bg-yellow-50' 
+                                    : 'text-blue-600 border-blue-200 hover:bg-blue-50'
+                            ]"
                         >
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            Gerar Agora
+                            <span v-if="buttonState === 'alert'">Gerar (⚠️ duplicata)</span>
+                            <span v-else>Gerar Agora</span>
                         </button>
+                        <!-- Blocked button with tooltip -->
+                        <div v-else class="flex-1 min-w-[120px] relative group">
+                            <button 
+                                disabled
+                                class="w-full btn-secondary opacity-50 cursor-not-allowed text-gray-400"
+                            >
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Gerar Agora
+                            </button>
+                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                {{ blockedTooltip || 'Não é possível gerar agora' }}
+                            </div>
+                        </div>
                         <button 
                             v-if="selectedRecurring.status === 'ativa'"
                             @click="openPauseConfirm(selectedRecurring); closeDetailModal()"
@@ -636,6 +676,56 @@
                 </div>
             </div>
         </Teleport>
+
+        <!-- Duplicate Warning Modal -->
+        <Teleport to="body">
+            <div v-if="showDuplicateWarning" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" @click.self="closeDuplicateWarning">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full animate-slide-up">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                ⚠️ Lançamento já existe neste período
+                            </h3>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                                Já existe um lançamento gerado para esta recorrência no período atual.
+                                Gerar outro lançamento pode causar duplicidade.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
+                        <p class="text-xs text-blue-800 dark:text-blue-300">
+                            💡 Use apenas para ajustes manuais ou cobranças excepcionais.
+                        </p>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button @click="closeDuplicateWarning" class="btn-secondary flex-1">
+                            Cancelar
+                        </button>
+                        <button 
+                            @click="confirmDuplicateGeneration" 
+                            :disabled="confirmLoading"
+                            class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                            <span v-if="confirmLoading" class="flex items-center justify-center">
+                                <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Gerando...
+                            </span>
+                            <span v-else>Gerar mesmo assim</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -673,6 +763,13 @@ const confirmRecurring = ref(null);
 const showDetailModal = ref(false);
 const selectedRecurring = ref(null);
 const detailLoading = ref(false);
+const buttonState = ref('normal'); // 'normal', 'alert', 'blocked'
+const blockedTooltip = ref(null);
+const generationInfo = ref(null);
+
+// Duplicate warning modal state
+const showDuplicateWarning = ref(false);
+const duplicateRecurring = ref(null);
 
 const tabs = [
     { label: 'Todas', value: 'all' },
@@ -903,7 +1000,14 @@ async function executeConfirmAction() {
     try {
         switch (confirmAction.value) {
             case 'generate':
-                await recurringStore.generateTransaction(confirmRecurring.value.id);
+                const result = await recurringStore.generateTransaction(confirmRecurring.value.id, false);
+                if (result.requires_confirmation) {
+                    // Need duplicate confirmation - show warning modal
+                    closeConfirmModal();
+                    duplicateRecurring.value = confirmRecurring.value;
+                    showDuplicateWarning.value = true;
+                    return;
+                }
                 break;
             case 'pause':
                 await recurringStore.pauseRecurring(confirmRecurring.value.id);
@@ -920,6 +1024,25 @@ async function executeConfirmAction() {
     }
 }
 
+// Handle duplicate warning confirmation
+async function confirmDuplicateGeneration() {
+    if (!duplicateRecurring.value) return;
+    
+    confirmLoading.value = true;
+    try {
+        await recurringStore.generateTransaction(duplicateRecurring.value.id, true);
+        showDuplicateWarning.value = false;
+        duplicateRecurring.value = null;
+    } finally {
+        confirmLoading.value = false;
+    }
+}
+
+function closeDuplicateWarning() {
+    showDuplicateWarning.value = false;
+    duplicateRecurring.value = null;
+}
+
 async function resumeRecurring(recurring) {
     await recurringStore.resumeRecurring(recurring.id);
 }
@@ -928,13 +1051,19 @@ async function resumeRecurring(recurring) {
 async function openDetailModal(recurring) {
     selectedRecurring.value = recurring;
     showDetailModal.value = true;
+    buttonState.value = 'normal';
+    blockedTooltip.value = null;
+    generationInfo.value = null;
     
-    // Fetch full details with transactions if needed
+    // Fetch full details with transactions and button state
     detailLoading.value = true;
     try {
-        const details = await recurringStore.fetchRecurringDetails(recurring.id);
-        if (details) {
-            selectedRecurring.value = details;
+        const result = await recurringStore.fetchRecurringDetails(recurring.id);
+        if (result) {
+            selectedRecurring.value = result.recurring;
+            buttonState.value = result.button_state || 'normal';
+            blockedTooltip.value = result.blocked_tooltip;
+            generationInfo.value = result.generation_info;
         }
     } finally {
         detailLoading.value = false;

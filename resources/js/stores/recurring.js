@@ -130,27 +130,51 @@ export const useRecurringStore = defineStore('recurring', {
             }
         },
 
-        async generateTransaction(id) {
+        /**
+         * Gera uma transação manual.
+         * @param {number} id - ID da recorrência
+         * @param {boolean} confirmDuplicate - Se true, confirma geração mesmo sendo duplicata
+         * @returns {Object} - { success, requires_confirmation, data }
+         */
+        async generateTransaction(id, confirmDuplicate = false) {
             const uiStore = useUiStore();
             try {
-                const response = await axios.post(`/api/recurring-transactions/${id}/generate`);
+                const response = await axios.post(`/api/recurring-transactions/${id}/generate`, {
+                    confirm_duplicate: confirmDuplicate
+                });
                 const index = this.recurrings.findIndex(r => r.id === id);
                 if (index !== -1) {
                     this.recurrings[index] = response.data.data.recurring;
                 }
                 uiStore.showToast(response.data.message, 'success');
-                return response.data;
+                return { success: true, data: response.data };
             } catch (error) {
+                // Verificar se é um conflito que requer confirmação
+                if (error.response?.status === 409 && error.response?.data?.requires_confirmation) {
+                    return {
+                        success: false,
+                        requires_confirmation: true,
+                        message: error.response.data.message
+                    };
+                }
                 const message = error.response?.data?.message || 'Erro ao gerar transação';
                 uiStore.showToast(message, 'error');
-                throw error;
+                return { success: false, error: message };
             }
         },
 
+        /**
+         * Busca detalhes completos de uma recorrência incluindo estado do botão
+         */
         async fetchRecurringDetails(id) {
             try {
                 const response = await axios.get(`/api/recurring-transactions/${id}`);
-                return response.data.data;
+                return {
+                    recurring: response.data.data,
+                    button_state: response.data.button_state,
+                    blocked_tooltip: response.data.blocked_tooltip,
+                    generation_info: response.data.generation_info,
+                };
             } catch (error) {
                 console.error('Erro ao carregar detalhes da recorrência:', error);
                 return null;

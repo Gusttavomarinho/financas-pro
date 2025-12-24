@@ -84,17 +84,22 @@ class RecurringTransactionController extends Controller
             return response()->json(['message' => 'Não autorizado.'], 403);
         }
 
+        $recurring->load([
+            'transactions' => function ($q) {
+                $q->select('id', 'recurring_transaction_id', 'date', 'value', 'type', 'description', 'generated_manually', 'duplicate_period', 'status')
+                    ->orderBy('date', 'desc')
+                    ->limit(50);
+            },
+            'category',
+            'account',
+            'card'
+        ]);
+
         return response()->json([
-            'data' => $recurring->load([
-                'transactions' => function ($q) {
-                    $q->select('id', 'recurring_transaction_id', 'date', 'value', 'type', 'description')
-                        ->orderBy('date', 'desc')
-                        ->limit(50); // Limit for performance but show more history
-                },
-                'category',
-                'account',
-                'card'
-            ]),
+            'data' => $recurring,
+            'button_state' => $recurring->getGenerateButtonState(),
+            'blocked_tooltip' => $recurring->getBlockedButtonTooltip(),
+            'generation_info' => $recurring->getGenerationInfo(),
         ]);
     }
 
@@ -203,12 +208,27 @@ class RecurringTransactionController extends Controller
             return response()->json(['message' => 'Não autorizado.'], 403);
         }
 
+        // Verificar se é uma duplicata intencional (requer confirmação do frontend)
+        $isDuplicate = $request->boolean('confirm_duplicate', false);
+
+        // Se já existe transação no período e não confirmou duplicata, retornar aviso
+        $buttonState = $recurring->getGenerateButtonState();
+        if ($buttonState === 'alert' && !$isDuplicate) {
+            return response()->json([
+                'message' => 'Já existe um lançamento neste período.',
+                'requires_confirmation' => true,
+                'button_state' => 'alert',
+            ], 409); // Conflict
+        }
+
         try {
             // forceManual=true: botão "Gerar Agora" usa validação permissiva
-            $transaction = $service->generateTransaction($recurring, forceManual: true);
+            $transaction = $service->generateTransaction($recurring, forceManual: true, isDuplicate: $isDuplicate);
 
             return response()->json([
-                'message' => 'Transação gerada com sucesso!',
+                'message' => $isDuplicate
+                    ? 'Lançamento adicional gerado com sucesso!'
+                    : 'Transação gerada com sucesso!',
                 'data' => [
                     'recurring' => $recurring->fresh()->load(['category', 'account', 'card']),
                     'transaction_id' => $transaction->id

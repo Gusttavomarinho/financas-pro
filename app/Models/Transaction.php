@@ -34,6 +34,8 @@ class Transaction extends Model
         'notes',
         'import_hash',
         'import_hash_version',
+        'generated_manually',
+        'duplicate_period',
     ];
 
     protected $casts = [

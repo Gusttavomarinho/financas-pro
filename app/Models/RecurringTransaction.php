@@ -211,4 +211,144 @@ class RecurringTransaction extends Model
     {
         return $this->status === 'encerrada';
     }
+
+    // ============ BUTTON STATE HELPERS ============
+
+    /**
+     * Calcula as datas do período atual baseado na frequência da recorrência.
+     * Retorna [start_date, end_date] do período correspondente.
+     */
+    public function getCurrentPeriodDates(): array
+    {
+        $now = Carbon::now();
+
+        switch ($this->frequency) {
+            case 'semanal':
+                // Semana atual
+                return [
+                    $now->copy()->startOfWeek(),
+                    $now->copy()->endOfWeek(),
+                ];
+
+            case 'mensal':
+                // Mês atual
+                return [
+                    $now->copy()->startOfMonth(),
+                    $now->copy()->endOfMonth(),
+                ];
+
+            case 'anual':
+                // Ano atual
+                return [
+                    $now->copy()->startOfYear(),
+                    $now->copy()->endOfYear(),
+                ];
+
+            case 'personalizada':
+                // Para frequência personalizada, consideramos o período desde a última geração
+                // ou desde o início da recorrência até now
+                $start = $this->last_generated_at
+                    ? $this->last_generated_at->copy()
+                    : $this->start_date->copy();
+                return [$start, $now];
+
+            default:
+                return [
+                    $now->copy()->startOfMonth(),
+                    $now->copy()->endOfMonth(),
+                ];
+        }
+    }
+
+    /**
+     * Verifica se já existe uma transação gerada para esta recorrência no período atual.
+     */
+    public function hasTransactionInCurrentPeriod(): bool
+    {
+        [$startDate, $endDate] = $this->getCurrentPeriodDates();
+
+        return $this->transactions()
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->whereNotIn('status', ['estornada', 'cancelada'])
+            ->exists();
+    }
+
+    /**
+     * Retorna o estado do botão "Gerar Agora":
+     * - 'normal': pode gerar sem aviso (não existe lançamento no período)
+     * - 'alert': existe lançamento no período, requer confirmação
+     * - 'blocked': não pode gerar (pausada/encerrada/antes da data início)
+     */
+    public function getGenerateButtonState(): string
+    {
+        // Verificar bloqueios
+        if ($this->status !== 'ativa') {
+            return 'blocked';
+        }
+
+        // Data atual antes da data de início
+        if ($this->start_date && Carbon::now()->lt($this->start_date)) {
+            return 'blocked';
+        }
+
+        // Data de término já passou
+        if ($this->end_date && Carbon::now()->gt($this->end_date)) {
+            return 'blocked';
+        }
+
+        // Verificar se já existe lançamento no período
+        if ($this->hasTransactionInCurrentPeriod()) {
+            return 'alert';
+        }
+
+        return 'normal';
+    }
+
+    /**
+     * Retorna a tooltip para o botão bloqueado, ou null se não bloqueado.
+     */
+    public function getBlockedButtonTooltip(): ?string
+    {
+        if ($this->status === 'pausada') {
+            return 'Esta recorrência está pausada';
+        }
+
+        if ($this->status === 'encerrada' || $this->status === 'concluida') {
+            return 'Esta recorrência está encerrada';
+        }
+
+        if ($this->start_date && Carbon::now()->lt($this->start_date)) {
+            return "A recorrência ainda não iniciou (início em {$this->start_date->format('d/m/Y')})";
+        }
+
+        if ($this->end_date && Carbon::now()->gt($this->end_date)) {
+            return 'A recorrência passou da data de término';
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna informações sobre as últimas gerações para exibição no modal.
+     */
+    public function getGenerationInfo(): array
+    {
+        $lastAutomatic = $this->transactions()
+            ->where('generated_manually', false)
+            ->whereNotIn('status', ['estornada', 'cancelada'])
+            ->orderBy('date', 'desc')
+            ->first();
+
+        $lastManual = $this->transactions()
+            ->where('generated_manually', true)
+            ->whereNotIn('status', ['estornada', 'cancelada'])
+            ->orderBy('date', 'desc')
+            ->first();
+
+        return [
+            'last_automatic' => $lastAutomatic ? $lastAutomatic->date->format('d/m/Y') : null,
+            'last_manual' => $lastManual ? $lastManual->date->format('d/m/Y') : null,
+            'next_occurrence' => $this->next_occurrence?->format('d/m/Y'),
+        ];
+    }
 }
