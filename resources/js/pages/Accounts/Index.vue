@@ -169,7 +169,7 @@
                             </div>
                         </div>
                         <div v-else class="text-center py-4 text-gray-500 text-sm">
-                            Nenhum lançamento nos últimos 30 dias
+                            Esta conta ainda não possui lançamentos
                         </div>
                     </div>
 
@@ -326,7 +326,7 @@ const typeLabels = {
     poupanca: 'Poupança',
     carteira_digital: 'Carteira Digital',
     investimento: 'Investimento',
-    caixa: 'Caixa',
+    caixa: 'Caixa (Dinheiro físico)',
     credito: 'Crédito',
 };
 

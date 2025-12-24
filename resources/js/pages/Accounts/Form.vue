@@ -37,9 +37,12 @@
                         <option value="poupanca">Poupança</option>
                         <option value="carteira_digital">Carteira Digital</option>
                         <option value="investimento">Investimento</option>
-                        <option value="caixa">Caixa</option>
+                        <option value="caixa">Caixa (Dinheiro físico)</option>
                         <option value="credito">Crédito</option>
                     </select>
+                    <p v-if="typeDescription" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        💡 {{ typeDescription }}
+                    </p>
                 </div>
 
                 <!-- Initial balance -->
@@ -132,6 +135,17 @@ const form = reactive({
     color: '#22c55e',
     notes: '',
 });
+
+const typeDescriptions = {
+    corrente: 'Conta bancária tradicional',
+    poupanca: 'Conta de poupança',
+    carteira_digital: 'Apps como Nubank, PicPay, Mercado Pago',
+    caixa: 'Dinheiro físico / dinheiro fora do banco',
+    investimento: 'Conta para acompanhar valores investidos',
+    credito: 'Conta de crédito sem cartão (ex: empréstimos, limites)',
+};
+
+const typeDescription = computed(() => typeDescriptions[form.type] || '');
 
 async function handleSubmit() {
     errors.value = {};

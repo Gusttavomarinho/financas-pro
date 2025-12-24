@@ -426,6 +426,25 @@ onMounted(async () => {
         } finally {
             loading.value = false;
         }
+    } else {
+        // New transaction: read prefill values from URL query params
+        const query = route.query;
+        
+        // Pre-fill type from URL (e.g., from "Depositar" button)
+        if (query.type && ['receita', 'despesa', 'transferencia'].includes(query.type)) {
+            form.type = query.type;
+        }
+        
+        // Pre-fill account from URL
+        if (query.account_id) {
+            form.account_id = query.account_id;
+        }
+        
+        // Pre-fill card from URL (if applicable)
+        if (query.card_id) {
+            form.card_id = query.card_id;
+            form.payment_method = 'credito';
+        }
     }
 });
 </script>
