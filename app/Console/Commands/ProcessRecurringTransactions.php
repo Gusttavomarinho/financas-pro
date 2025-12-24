@@ -31,6 +31,12 @@ class ProcessRecurringTransactions extends Command
         $dateInput = $this->option('date');
         $date = $dateInput ? Carbon::parse($dateInput) : Carbon::now();
 
+        // For testing: simulate the system date so isFuture()/isToday() work correctly
+        if ($dateInput) {
+            Carbon::setTestNow($date);
+            $this->info("⏰ Simulando data do sistema como: " . $date->format('Y-m-d'));
+        }
+
         $this->info("Iniciando processamento para data: " . $date->format('Y-m-d'));
 
         try {
@@ -47,6 +53,11 @@ class ProcessRecurringTransactions extends Command
             Log::error($error, ['trace' => $e->getTraceAsString()]);
 
             return 1;
+        } finally {
+            // Reset test time
+            if ($dateInput) {
+                Carbon::setTestNow();
+            }
         }
     }
 }

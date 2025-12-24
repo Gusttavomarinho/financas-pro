@@ -61,8 +61,9 @@ class RecurringTransactionService
     {
         return DB::transaction(function () use ($recurring) {
             // 1. Validar se ainda deve gerar (double check)
-            if (!$recurring->shouldGenerate()) {
-                throw new \Exception("Recorrência não deve ser gerada agora.");
+            $blockReason = $recurring->getBlockReason();
+            if ($blockReason !== null) {
+                throw new \Exception($blockReason);
             }
 
             // 2. Criar Transação

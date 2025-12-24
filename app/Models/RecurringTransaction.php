@@ -84,27 +84,36 @@ class RecurringTransaction extends Model
      */
     public function shouldGenerate(): bool
     {
+        return $this->getBlockReason() === null;
+    }
+
+    /**
+     * Retorna o motivo pelo qual a recorrência não pode ser gerada agora,
+     * ou null se pode gerar.
+     */
+    public function getBlockReason(): ?string
+    {
         // Não gerar se pausada ou encerrada
         if ($this->status !== 'ativa') {
-            return false;
+            return "Recorrência está com status '{$this->status}'. Apenas recorrências ativas podem gerar transações.";
         }
 
         // Não gerar se já gerou hoje
         if ($this->last_generated_at && $this->last_generated_at->isToday()) {
-            return false;
+            return "Já foi gerada uma transação hoje ({$this->last_generated_at->format('d/m/Y')}). Aguarde até amanhã.";
         }
 
         // Não gerar se next_occurrence é no futuro
         if ($this->next_occurrence->isFuture()) {
-            return false;
+            return "A próxima cobrança está programada para {$this->next_occurrence->format('d/m/Y')}. Ainda não é a data.";
         }
 
         // Não gerar se passou do end_date
         if ($this->end_date && $this->next_occurrence->gt($this->end_date)) {
-            return false;
+            return "A recorrência passou da data de término ({$this->end_date->format('d/m/Y')}).";
         }
 
-        return true;
+        return null;
     }
 
     /**
