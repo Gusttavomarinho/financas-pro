@@ -67,7 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('attachments/{attachment}/download', [TransactionAttachmentController::class, 'download']);
 
     // Recurring Transactions
-    Route::apiResource('recurring-transactions', App\Http\Controllers\Api\RecurringTransactionController::class);
+    Route::apiResource('recurring-transactions', App\Http\Controllers\Api\RecurringTransactionController::class)
+        ->parameters(['recurring-transactions' => 'recurring']);
     Route::post('recurring-transactions/{recurring}/pause', [App\Http\Controllers\Api\RecurringTransactionController::class, 'pause']);
     Route::post('recurring-transactions/{recurring}/resume', [App\Http\Controllers\Api\RecurringTransactionController::class, 'resume']);
     Route::post('recurring-transactions/{recurring}/end', [App\Http\Controllers\Api\RecurringTransactionController::class, 'end']);
