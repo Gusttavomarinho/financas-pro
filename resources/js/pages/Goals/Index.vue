@@ -47,9 +47,9 @@
                 :key="goal.id"
                 class="card hover:shadow-lg transition-shadow relative overflow-hidden"
             >
-                <!-- Status ribbon -->
+                <!-- Status ribbon (only for completed or cancelled goals) -->
                 <div 
-                    v-if="goal.status !== 'em_andamento'"
+                    v-if="goal.status === 'concluido' || goal.status === 'cancelado'"
                     :class="[
                         'absolute top-0 right-0 px-2 py-1 text-xs font-bold text-white',
                         goal.status === 'concluido' ? 'bg-green-500' : 'bg-gray-500'
