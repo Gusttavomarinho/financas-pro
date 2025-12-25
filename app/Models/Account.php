@@ -26,11 +26,13 @@ class Account extends Model
         'notes',
         'is_active',
         'status',
+        'exclude_from_totals',
     ];
 
     protected $casts = [
         'initial_balance' => 'decimal:2',
         'is_active' => 'boolean',
+        'exclude_from_totals' => 'boolean',
     ];
 
     protected $appends = ['current_balance'];
@@ -88,6 +90,14 @@ class Account extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Escopo para contas que devem ser incluídas nos totais
+     */
+    public function scopeIncludedInTotals($query)
+    {
+        return $query->where('exclude_from_totals', false);
     }
 
     /**

@@ -58,9 +58,10 @@
                         {{ account.name.charAt(0).toUpperCase() }}
                     </div>
                     <div class="flex-1">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h3 class="font-semibold text-gray-900 dark:text-white">{{ account.name }}</h3>
                             <span v-if="account.status === 'archived'" class="badge badge-gray text-xs">Arquivada</span>
+                            <span v-if="account.exclude_from_totals" class="badge badge-amber text-xs" title="Esta conta não é considerada nos totais">Excluída dos cálculos</span>
                             <button
                                 v-if="account.status === 'archived'"
                                 @click.stop.prevent="handleUnarchive(account)"

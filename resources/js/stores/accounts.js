@@ -10,7 +10,7 @@ export const useAccountsStore = defineStore('accounts', () => {
 
     const totalBalance = computed(() => {
         return accounts.value
-            .filter(a => a.status === 'active')
+            .filter(a => a.status === 'active' && !a.exclude_from_totals)
             .reduce((sum, a) => sum + parseFloat(a.current_balance || 0), 0);
     });
 

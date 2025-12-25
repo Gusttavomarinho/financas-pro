@@ -24,19 +24,23 @@ class CategorySeeder extends Seeder
             ['name' => 'Pets', 'icon' => '🐾', 'color' => '#eab308'],
             ['name' => 'Presentes', 'icon' => '🎁', 'color' => '#d946ef'],
             ['name' => 'Viagens', 'icon' => '✈️', 'color' => '#0ea5e9'],
-            ['name' => 'Outros (Despesa)', 'icon' => '📦', 'color' => '#94a3b8'],
+            ['name' => 'Outras despesas', 'icon' => '📦', 'color' => '#94a3b8'],
         ];
 
         foreach ($expenseCategories as $category) {
-            Category::create([
-                'name' => $category['name'],
-                'type' => 'despesa',
-                'icon' => $category['icon'],
-                'color' => $category['color'],
-                'is_system' => true,
-                'is_active' => true,
-                'user_id' => null,
-            ]);
+            Category::firstOrCreate(
+                [
+                    'name' => $category['name'],
+                    'type' => 'despesa',
+                    'user_id' => null,
+                ],
+                [
+                    'icon' => $category['icon'],
+                    'color' => $category['color'],
+                    'is_system' => true,
+                    'is_active' => true,
+                ]
+            );
         }
 
         // Categorias de Receita (sistema)
@@ -48,19 +52,24 @@ class CategorySeeder extends Seeder
             ['name' => 'Dividendos', 'icon' => '📊', 'color' => '#14b8a6'],
             ['name' => 'Restituição', 'icon' => '💵', 'color' => '#06b6d4'],
             ['name' => 'Vendas', 'icon' => '🛒', 'color' => '#0ea5e9'],
-            ['name' => 'Outros (Receita)', 'icon' => '✨', 'color' => '#6ee7b7'],
+            ['name' => 'Outras receitas', 'icon' => '✨', 'color' => '#6ee7b7'],
         ];
 
         foreach ($incomeCategories as $category) {
-            Category::create([
-                'name' => $category['name'],
-                'type' => 'receita',
-                'icon' => $category['icon'],
-                'color' => $category['color'],
-                'is_system' => true,
-                'is_active' => true,
-                'user_id' => null,
-            ]);
+            Category::firstOrCreate(
+                [
+                    'name' => $category['name'],
+                    'type' => 'receita',
+                    'user_id' => null,
+                ],
+                [
+                    'icon' => $category['icon'],
+                    'color' => $category['color'],
+                    'is_system' => true,
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }
+

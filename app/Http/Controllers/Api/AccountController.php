@@ -5,11 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AuditLog;
+use App\Services\AccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
+    protected AccountService $accountService;
+
+    public function __construct(AccountService $accountService)
+    {
+        $this->accountService = $accountService;
+    }
+
     /**
      * Lista todas as contas ativas do usuário
      */
@@ -32,7 +40,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Cria uma nova conta
+     * Cria uma nova conta com transação de saldo inicial automática
      */
     public function store(Request $request): JsonResponse
     {
@@ -47,22 +55,22 @@ class AccountController extends Controller
             'agency' => ['nullable', 'string', 'max:20'],
             'account_number' => ['nullable', 'string', 'max:30'],
             'notes' => ['nullable', 'string'],
+            'exclude_from_totals' => ['nullable', 'boolean'],
         ], [
             'name.required' => 'O nome da conta é obrigatório.',
             'type.required' => 'O tipo de conta é obrigatório.',
         ]);
 
-        $account = Account::create([
-            ...$validated,
-            'user_id' => $request->user()->id,
-            'status' => 'active',
-        ]);
+        $account = $this->accountService->createAccount($validated, $request->user()->id);
 
-        // Note: AuditObserver automatically logs 'create' event
+        $message = 'Conta criada com sucesso!';
+        if (($validated['initial_balance'] ?? 0) != 0) {
+            $message .= ' Transação de saldo inicial foi criada automaticamente.';
+        }
 
         return response()->json([
-            'message' => 'Conta criada com sucesso!',
-            'data' => $account,
+            'message' => $message,
+            'data' => $account->fresh(),
         ], 201);
     }
 
@@ -212,5 +220,50 @@ class AccountController extends Controller
             'message' => 'Conta reativada com sucesso!',
             'data' => $account->fresh(),
         ]);
+    }
+
+    /**
+     * Ajusta o saldo da conta gerando uma transação automática
+     */
+    public function adjustBalance(Request $request, Account $account): JsonResponse
+    {
+        if ($account->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Não autorizado.'], 403);
+        }
+
+        if ($account->isArchived()) {
+            return response()->json([
+                'message' => 'Conta arquivada não pode ter saldo ajustado.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'target_balance' => ['required', 'numeric'],
+        ], [
+            'target_balance.required' => 'O novo saldo é obrigatório.',
+        ]);
+
+        try {
+            $transaction = $this->accountService->adjustBalance(
+                $account,
+                $validated['target_balance'],
+                $request->user()->id
+            );
+
+            $difference = $validated['target_balance'] - $account->current_balance;
+            $action = $difference > 0 ? 'aumentou' : 'diminuiu';
+
+            return response()->json([
+                'message' => "Saldo ajustado com sucesso! O saldo {$action} em R$ " . number_format(abs($difference), 2, ',', '.'),
+                'data' => [
+                    'account' => $account->fresh(),
+                    'transaction' => $transaction->load('category'),
+                ],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

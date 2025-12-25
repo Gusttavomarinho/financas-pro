@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->text('notes')->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('status')->default('active'); // 'active' or 'archived'
+            $table->boolean('exclude_from_totals')->default(false); // Excluir dos cálculos totais
             $table->timestamps();
             $table->softDeletes();
 

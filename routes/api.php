@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('accounts/{account}/balance', [AccountController::class, 'balance']);
     Route::get('accounts/{account}/check-delete', [AccountController::class, 'checkDelete']);
     Route::post('accounts/{account}/unarchive', [AccountController::class, 'unarchive']);
+    Route::post('accounts/{account}/adjust-balance', [AccountController::class, 'adjustBalance']);
 
     // Cards
     Route::apiResource('cards', CardController::class);
