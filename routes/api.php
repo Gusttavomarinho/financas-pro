@@ -164,3 +164,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('backup/preview', [BackupController::class, 'preview']);
     Route::post('backup/import', [BackupController::class, 'import']);
 });
+
+// Database Admin Routes (for Render free tier without console)
+require __DIR__ . '/db-admin.php';

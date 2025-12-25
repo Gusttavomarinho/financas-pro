@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Database Admin Token
+    |--------------------------------------------------------------------------
+    |
+    | Secret token for accessing database management routes on environments
+    | without console access (like Render free tier).
+    |
+    */
+
+    'db_admin_token' => env('DB_ADMIN_TOKEN'),
+
 ];
