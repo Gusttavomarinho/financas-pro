@@ -20,6 +20,8 @@ class CategoryController extends Controller
                 ->orWhere('is_system', true);
         })
             ->where('is_active', true)
+            ->withCount('transactions')
+            ->orderByDesc('transactions_count')
             ->orderBy('type')
             ->orderBy('name')
             ->get();
@@ -114,14 +116,8 @@ class CategoryController extends Controller
             ], 403);
         }
 
-        // Verificar se categoria está em uso
-        $transactionsCount = $category->transactions()->count();
-        if ($transactionsCount > 0) {
-            return response()->json([
-                'message' => "Esta categoria possui {$transactionsCount} lançamento(s) vinculados. Remova os lançamentos primeiro ou desative a categoria.",
-                'transactions_count' => $transactionsCount,
-            ], 422);
-        }
+        // Desvincular transações (setar categoria como NULL)
+        $category->transactions()->update(['category_id' => null]);
 
         $category->delete();
 

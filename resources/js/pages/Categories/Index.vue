@@ -41,6 +41,9 @@
                                 <span class="text-white text-sm">{{ category.icon || '💰' }}</span>
                             </div>
                             <span class="font-medium text-gray-900 dark:text-white">{{ category.name }}</span>
+                            <span v-if="category.transactions_count > 0" class="text-xs text-gray-400">
+                                {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
+                            </span>
                         </div>
                         <button
                             @click.stop="handleDelete(category)"
@@ -75,6 +78,9 @@
                                 <span class="text-white text-sm">{{ category.icon || '📦' }}</span>
                             </div>
                             <span class="font-medium text-gray-900 dark:text-white">{{ category.name }}</span>
+                            <span v-if="category.transactions_count > 0" class="text-xs text-gray-400">
+                                {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
+                            </span>
                         </div>
                         <button
                             @click.stop="handleDelete(category)"
@@ -145,17 +151,19 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Excluir Categoria</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Excluir categoria?</h3>
                     </div>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">
-                        Tem certeza que deseja excluir a categoria <strong>"{{ categoryToDelete?.name }}"</strong>?
-                    </p>
+                    <div class="text-gray-600 dark:text-gray-400 mb-6 space-y-2">
+                        <p>Esta categoria possui <strong>{{ categoryToDelete?.transactions_count }} lançamentos</strong> associados.</p>
+                        <p>Ao excluir, esses lançamentos ficarão como <strong>"Sem categoria"</strong>.</p>
+                        <p>Deseja continuar?</p>
+                    </div>
                     <div class="flex gap-3">
                         <button @click="showDeleteModal = false" class="btn-secondary flex-1">
                             Cancelar
                         </button>
                         <button @click="confirmDelete" class="btn-danger flex-1">
-                            Excluir
+                            Excluir mesmo assim
                         </button>
                     </div>
                 </div>
@@ -206,6 +214,15 @@ async function handleCreate() {
 }
 
 async function handleDelete(category) {
+    // Caso A: Categoria sem lançamentos, excluir direto
+    if (!category.transactions_count || category.transactions_count === 0) {
+        if (confirm('Excluir categoria?')) { // Fallback simples de navegador por segurança
+            await categoriesStore.deleteCategory(category.id);
+        }
+        return;
+    }
+
+    // Caso B: Categoria em uso, confirmar com explanação
     categoryToDelete.value = category;
     showDeleteModal.value = true;
 }
