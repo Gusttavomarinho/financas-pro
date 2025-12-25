@@ -147,6 +147,27 @@
                     </div>
                     
                     <div class="p-6 overflow-y-auto max-h-[60vh]">
+                        <!-- Day Summary -->
+                        <div v-if="selectedDayEvents.length > 0" class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Resumo do dia</p>
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">💰 Entradas</p>
+                                    <p class="text-sm font-bold text-green-600">{{ formatCurrency(selectedDayIncome) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">💸 Saídas</p>
+                                    <p class="text-sm font-bold text-red-600">{{ formatCurrency(selectedDayExpenses) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">🔁 Saldo</p>
+                                    <p :class="['text-sm font-bold', selectedDayBalance >= 0 ? 'text-green-600' : 'text-red-600']">
+                                        {{ formatCurrency(selectedDayBalance, true) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div v-if="selectedDayEvents.length === 0" class="text-center py-8 text-gray-500">
                             Nenhum evento neste dia
                         </div>
@@ -267,6 +288,22 @@ const selectedDayLabel = computed(() => {
     const [year, month, day] = selectedDay.value.date.split('-');
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+});
+
+const selectedDayIncome = computed(() => {
+    return selectedDayEvents.value
+        .filter(e => e.operation === 'receita')
+        .reduce((sum, e) => sum + parseFloat(e.value), 0);
+});
+
+const selectedDayExpenses = computed(() => {
+    return selectedDayEvents.value
+        .filter(e => e.operation === 'despesa')
+        .reduce((sum, e) => sum + parseFloat(e.value), 0);
+});
+
+const selectedDayBalance = computed(() => {
+    return selectedDayIncome.value - selectedDayExpenses.value;
 });
 
 function formatDateKey(date) {
