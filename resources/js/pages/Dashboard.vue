@@ -806,10 +806,23 @@ async function loadDashboardData() {
             } else {
                 stats.value.expensesTrend = 0;
             }
+
+            // Calculate balance trend (based on net flow: income - expenses)
+            const currentNetFlow = stats.value.monthIncome - stats.value.monthExpenses;
+            const prevNetFlow = prevIncome - prevExpenses;
+            
+            if (Math.abs(prevNetFlow) > 0) {
+                stats.value.balanceTrend = Math.round(((currentNetFlow - prevNetFlow) / Math.abs(prevNetFlow)) * 100);
+            } else if (currentNetFlow !== 0) {
+                stats.value.balanceTrend = currentNetFlow > 0 ? 100 : -100;
+            } else {
+                stats.value.balanceTrend = 0;
+            }
         } else {
             // Year mode: reset trends (different comparison logic would be needed)
             stats.value.incomeTrend = 0;
             stats.value.expensesTrend = 0;
+            stats.value.balanceTrend = 0;
         }
 
         // Load cards and invoices
