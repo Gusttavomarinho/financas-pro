@@ -301,7 +301,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Get transactions by account for charts.
+     * Get transactions by account for charts (with receita and despesa breakdown).
      */
     public function byAccount(Request $request)
     {
@@ -315,21 +315,23 @@ class ReportController extends Controller
         if ($request->filled('date_to')) {
             $query->where('date', '<=', $request->date_to);
         }
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
 
         $transactions = $query->get();
 
         $grouped = $transactions->groupBy('account_id')->map(function ($group) {
             $account = $group->first()->account;
+            $receita = $group->where('type', 'receita')->sum('value');
+            $despesa = $group->where('type', 'despesa')->sum('value');
+
             return [
                 'account_id' => $account?->id,
                 'name' => $account?->name ?? 'Sem conta',
                 'color' => $account?->color ?? '#6b7280',
-                'total' => $group->sum('value'),
+                'receita' => $receita,
+                'despesa' => $despesa,
+                'saldo' => $receita - $despesa,
             ];
-        })->sortByDesc('total')->values();
+        })->sortByDesc('despesa')->values();
 
         return response()->json(['data' => $grouped]);
     }
@@ -462,14 +464,14 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
         $cards = \App\Models\Card::where('user_id', $userId)
-            ->where('is_archived', false)
+            ->where('status', '!=', 'arquivado')
             ->get();
 
         $data = $cards->map(function ($card) {
             return [
                 'name' => $card->name,
-                'limit' => $card->limit,
-                'used' => $card->limit - $card->available_limit,
+                'limit' => $card->credit_limit,
+                'used' => $card->used_limit,
                 'available' => $card->available_limit,
             ];
         });
@@ -573,10 +575,15 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
 
-        // Extract month from date_from filter or use current month
-        $month = Carbon::now()->format('Y-m');
+        // Determine date range from filter or use current month
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
         if ($request->filled('date_from')) {
-            $month = Carbon::parse($request->date_from)->format('Y-m');
+            $startDate = $request->date_from;
+        }
+        if ($request->filled('date_to')) {
+            $endDate = $request->date_to;
         }
 
         $budgets = \App\Models\Budget::where('user_id', $userId)
@@ -590,7 +597,7 @@ class ReportController extends Controller
             $spent = Transaction::where('user_id', $userId)
                 ->where('category_id', $budget->category_id)
                 ->where('type', 'despesa')
-                ->whereRaw("strftime('%Y-%m', date) = ?", [$month])
+                ->whereBetween('date', [$startDate, $endDate])
                 ->sum('value');
             $totalActual += $spent;
         }
@@ -612,10 +619,15 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
 
-        // Extract month from date_from filter or use current month
-        $month = Carbon::now()->format('Y-m');
+        // Determine date range from filter or use current month
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
         if ($request->filled('date_from')) {
-            $month = Carbon::parse($request->date_from)->format('Y-m');
+            $startDate = $request->date_from;
+        }
+        if ($request->filled('date_to')) {
+            $endDate = $request->date_to;
         }
 
         $budgets = \App\Models\Budget::where('user_id', $userId)
@@ -628,7 +640,7 @@ class ReportController extends Controller
             $spent = Transaction::where('user_id', $userId)
                 ->where('category_id', $budget->category_id)
                 ->where('type', 'despesa')
-                ->whereRaw("strftime('%Y-%m', date) = ?", [$month])
+                ->whereBetween('date', [$startDate, $endDate])
                 ->sum('value');
 
             if ($spent > 0) {
@@ -651,7 +663,17 @@ class ReportController extends Controller
     public function budgetAlerts(Request $request)
     {
         $userId = Auth::id();
-        $month = Carbon::now()->format('Y-m');
+
+        // Determine date range from filter or use current month
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        if ($request->filled('date_from')) {
+            $startDate = $request->date_from;
+        }
+        if ($request->filled('date_to')) {
+            $endDate = $request->date_to;
+        }
 
         $budgets = \App\Models\Budget::where('user_id', $userId)
             ->with('category')
@@ -663,7 +685,7 @@ class ReportController extends Controller
             $spent = Transaction::where('user_id', $userId)
                 ->where('category_id', $budget->category_id)
                 ->where('type', 'despesa')
-                ->whereRaw("strftime('%Y-%m', date) = ?", [$month])
+                ->whereBetween('date', [$startDate, $endDate])
                 ->sum('value');
 
             $percentage = $budget->amount > 0 ? ($spent / $budget->amount) * 100 : 0;

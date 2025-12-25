@@ -44,10 +44,7 @@ const hasData = computed(() => {
 
 const chartData = computed(() => {
     return {
-        labels: rawData.value.map(item => {
-            const [year, month] = item.month.split('-');
-            return `${month}/${year}`;
-        }),
+        labels: rawData.value.map(item => item.month),
         datasets: [
             {
                 label: 'Despesas',
