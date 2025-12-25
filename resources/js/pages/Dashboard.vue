@@ -768,6 +768,50 @@ async function loadDashboardData() {
             .filter(t => t.type === 'despesa')
             .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
+        // Calculate trends (comparison with previous month)
+        if (viewMode.value === 'month') {
+            // Get previous month dates
+            const prevMonth = selectedMonth.value === 1 ? 12 : selectedMonth.value - 1;
+            const prevYear = selectedMonth.value === 1 ? selectedYear.value - 1 : selectedYear.value;
+            const prevPeriodStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+            const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
+            const prevPeriodEnd = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
+
+            // Filter transactions for previous month
+            const prevTransactions = transactionsStore.transactions.filter(t => {
+                return t.date >= prevPeriodStart && t.date <= prevPeriodEnd;
+            });
+
+            const prevIncome = prevTransactions
+                .filter(t => t.type === 'receita')
+                .reduce((sum, t) => sum + parseFloat(t.value), 0);
+
+            const prevExpenses = prevTransactions
+                .filter(t => t.type === 'despesa')
+                .reduce((sum, t) => sum + parseFloat(t.value), 0);
+
+            // Calculate percentage change
+            if (prevIncome > 0) {
+                stats.value.incomeTrend = Math.round(((stats.value.monthIncome - prevIncome) / prevIncome) * 100);
+            } else if (stats.value.monthIncome > 0) {
+                stats.value.incomeTrend = 100; // New income where there was none before
+            } else {
+                stats.value.incomeTrend = 0;
+            }
+
+            if (prevExpenses > 0) {
+                stats.value.expensesTrend = Math.round(((stats.value.monthExpenses - prevExpenses) / prevExpenses) * 100);
+            } else if (stats.value.monthExpenses > 0) {
+                stats.value.expensesTrend = 100; // New expenses where there were none before
+            } else {
+                stats.value.expensesTrend = 0;
+            }
+        } else {
+            // Year mode: reset trends (different comparison logic would be needed)
+            stats.value.incomeTrend = 0;
+            stats.value.expensesTrend = 0;
+        }
+
         // Load cards and invoices
         await cardsStore.fetchCards();
 
