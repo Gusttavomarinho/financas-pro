@@ -52,23 +52,7 @@
                         </button>
                     </div>
 
-                    <div>
-                        <label class="label">Moeda padrão</label>
-                        <select v-model="preferences.currency" class="input">
-                            <option value="BRL">Real (R$)</option>
-                            <option value="USD">Dólar (US$)</option>
-                            <option value="EUR">Euro (€)</option>
-                        </select>
-                    </div>
 
-                    <div>
-                        <label class="label">Formato de data</label>
-                        <select v-model="preferences.date_format" class="input">
-                            <option value="DD/MM/YYYY">DD/MM/AAAA</option>
-                            <option value="MM/DD/YYYY">MM/DD/AAAA</option>
-                            <option value="YYYY-MM-DD">AAAA-MM-DD</option>
-                        </select>
-                    </div>
                 </div>
             </div>
 
@@ -134,10 +118,7 @@ const profile = reactive({
     email: '',
 });
 
-const preferences = reactive({
-    currency: 'BRL',
-    date_format: 'DD/MM/YYYY',
-});
+
 
 const password = reactive({
     new: '',
