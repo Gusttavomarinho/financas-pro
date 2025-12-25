@@ -65,7 +65,7 @@ class GoalController extends Controller
 
         return response()->json([
             'message' => 'Objetivo criado com sucesso!',
-            'data' => $goal,
+            'data' => $goal->fresh(),
         ], 201);
     }
 
@@ -102,6 +102,15 @@ class GoalController extends Controller
         ]);
 
         $goal->update($validated);
+
+        // Recalculate status if target_value was changed
+        // If goal was 'concluido' but current_value < new target_value, revert to 'em_andamento'
+        if (isset($validated['target_value'])) {
+            $goal->refresh();
+            if ($goal->status === 'concluido' && $goal->current_value < $goal->target_value) {
+                $goal->update(['status' => 'em_andamento']);
+            }
+        }
 
         AuditLog::log('update', 'Goal', $goal->id, [
             'changes' => array_keys($validated),
