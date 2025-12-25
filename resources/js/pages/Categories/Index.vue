@@ -45,7 +45,7 @@
                                 {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
                             </span>
                         </div>
-                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center">
                             <button
                                 @click.stop="handleEdit(category)"
                                 class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500"
@@ -94,7 +94,7 @@
                                 {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
                             </span>
                         </div>
-                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center">
                             <button
                                 @click.stop="handleEdit(category)"
                                 class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500"
@@ -203,11 +203,14 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+// Import transactions store
 import { useCategoriesStore } from '@/stores/categories';
 import DismissableBanner from '@/components/Common/DismissableBanner.vue';
+import { useTransactionsStore } from '@/stores/transactions';
 
 const categoriesStore = useCategoriesStore();
-const showModal = ref(false); // Renamed from showCreateModal
+const transactionsStore = useTransactionsStore();
+const showModal = ref(false);
 const showDeleteModal = ref(false);
 const categoryToDelete = ref(null);
 const isEditing = ref(false);
@@ -295,7 +298,9 @@ const router = useRouter();
 
 function navigateToTransactions(category) {
     // Navigate to transactions filtered by this category
-    // Removed date filters to show all history as requested
+    // Clear existing filters first to ensure we don't carry over date filters
+    transactionsStore.clearFilters();
+    
     router.push({
         path: '/transactions',
         query: {
