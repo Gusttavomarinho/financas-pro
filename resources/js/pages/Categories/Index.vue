@@ -5,7 +5,7 @@
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Categorias</h1>
                 <p class="text-gray-500 dark:text-gray-400">Organize seus lançamentos por categoria</p>
             </div>
-            <button @click="showCreateModal = true" class="btn-primary">
+            <button @click="openCreateModal" class="btn-primary">
                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -31,7 +31,7 @@
                         v-for="category in incomeCategories"
                         :key="category.id"
                         @click="navigateToTransactions(category)"
-                        class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                        class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group"
                     >
                         <div class="flex items-center gap-3">
                             <div
@@ -45,14 +45,26 @@
                                 {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
                             </span>
                         </div>
-                        <button
-                            @click.stop="handleDelete(category)"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                        >
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
+                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                @click.stop="handleEdit(category)"
+                                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500"
+                                title="Editar"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button
+                                @click.stop="handleDelete(category)"
+                                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500"
+                                title="Excluir"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -68,7 +80,7 @@
                         v-for="category in expenseCategories"
                         :key="category.id"
                         @click="navigateToTransactions(category)"
-                        class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                        class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group"
                     >
                         <div class="flex items-center gap-3">
                             <div
@@ -82,34 +94,48 @@
                                 {{ category.transactions_count }} {{ category.transactions_count === 1 ? 'uso' : 'usos' }}
                             </span>
                         </div>
-                        <button
-                            @click.stop="handleDelete(category)"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                        >
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
+                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                @click.stop="handleEdit(category)"
+                                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500"
+                                title="Editar"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button
+                                @click.stop="handleDelete(category)"
+                                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500"
+                                title="Excluir"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Create modal -->
+        <!-- Create/Edit modal -->
         <Teleport to="body">
-            <div v-if="showCreateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Nova Categoria</h3>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                        {{ isEditing ? 'Editar Categoria' : 'Nova Categoria' }}
+                    </h3>
                     
-                    <form @submit.prevent="handleCreate" class="space-y-4">
+                    <form @submit.prevent="handleSave" class="space-y-4">
                         <div>
                             <label class="label">Nome *</label>
-                            <input v-model="newCategory.name" type="text" required class="input" placeholder="Nome da categoria" />
+                            <input v-model="categoryForm.name" type="text" required class="input" placeholder="Nome da categoria" />
                         </div>
 
                         <div>
                             <label class="label">Tipo *</label>
-                            <select v-model="newCategory.type" required class="input">
+                            <select v-model="categoryForm.type" required class="input" :disabled="isEditing">
                                 <option value="receita">Receita</option>
                                 <option value="despesa">Despesa</option>
                             </select>
@@ -122,10 +148,10 @@
                                     v-for="color in colors"
                                     :key="color"
                                     type="button"
-                                    @click="newCategory.color = color"
+                                    @click="categoryForm.color = color"
                                     :class="[
                                         'w-8 h-8 rounded-lg transition-transform',
-                                        newCategory.color === color ? 'ring-2 ring-offset-2 ring-gray-900 scale-110' : ''
+                                        categoryForm.color === color ? 'ring-2 ring-offset-2 ring-gray-900 scale-110' : ''
                                     ]"
                                     :style="{ backgroundColor: color }"
                                 />
@@ -133,8 +159,10 @@
                         </div>
 
                         <div class="flex gap-3 pt-4">
-                            <button type="submit" class="btn-primary flex-1">Criar</button>
-                            <button type="button" @click="showCreateModal = false" class="btn-secondary">Cancelar</button>
+                            <button type="submit" class="btn-primary flex-1">
+                                {{ isEditing ? 'Salvar' : 'Criar' }}
+                            </button>
+                            <button type="button" @click="showModal = false" class="btn-secondary">Cancelar</button>
                         </div>
                     </form>
                 </div>
@@ -172,6 +200,8 @@
     </div>
 </template>
 
+</template>
+
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -179,9 +209,11 @@ import { useCategoriesStore } from '@/stores/categories';
 import DismissableBanner from '@/components/Common/DismissableBanner.vue';
 
 const categoriesStore = useCategoriesStore();
-const showCreateModal = ref(false);
+const showModal = ref(false); // Renamed from showCreateModal
 const showDeleteModal = ref(false);
 const categoryToDelete = ref(null);
+const isEditing = ref(false);
+const editingId = ref(null);
 
 const colors = [
     '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
@@ -189,7 +221,7 @@ const colors = [
     '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#6b7280',
 ];
 
-const newCategory = reactive({
+const categoryForm = reactive({
     name: '',
     type: 'despesa',
     color: colors[0],
@@ -203,26 +235,48 @@ const expenseCategories = computed(() =>
     categoriesStore.categories.filter(c => c.type === 'despesa')
 );
 
-async function handleCreate() {
-    const result = await categoriesStore.createCategory(newCategory);
+function openCreateModal() {
+    isEditing.value = false;
+    editingId.value = null;
+    categoryForm.name = '';
+    categoryForm.type = 'despesa';
+    categoryForm.color = colors[0];
+    showModal.value = true;
+}
+
+function handleEdit(category) {
+    isEditing.value = true;
+    editingId.value = category.id;
+    categoryForm.name = category.name;
+    categoryForm.type = category.type;
+    categoryForm.color = category.color || colors[0];
+    showModal.value = true;
+}
+
+async function handleSave() {
+    let result;
+    if (isEditing.value) {
+        result = await categoriesStore.updateCategory(editingId.value, categoryForm);
+    } else {
+        result = await categoriesStore.createCategory(categoryForm);
+    }
+
     if (result.success) {
-        showCreateModal.value = false;
-        newCategory.name = '';
-        newCategory.type = 'despesa';
-        newCategory.color = colors[0];
+        showModal.value = false;
+        // Reset form
+        categoryForm.name = '';
+        categoryForm.type = 'despesa';
+        categoryForm.color = colors[0];
     }
 }
 
 async function handleDelete(category) {
-    // Caso A: Categoria sem lançamentos, excluir direto
     if (!category.transactions_count || category.transactions_count === 0) {
-        if (confirm('Excluir categoria?')) { // Fallback simples de navegador por segurança
+        if (confirm('Excluir categoria?')) {
             await categoriesStore.deleteCategory(category.id);
         }
         return;
     }
-
-    // Caso B: Categoria em uso, confirmar com explanação
     categoryToDelete.value = category;
     showDeleteModal.value = true;
 }
@@ -243,20 +297,11 @@ const router = useRouter();
 
 function navigateToTransactions(category) {
     // Navigate to transactions filtered by this category
-    // Default to current month for better UX
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    // Use sv-SE for YYYY-MM-DD format respecting local time
-    const formatDate = (date) => date.toLocaleDateString('sv-SE');
-
+    // Removed date filters to show all history as requested
     router.push({
         path: '/transactions',
         query: {
             category_id: category.id,
-            date_from: formatDate(start),
-            date_to: formatDate(end),
             type: category.type
         }
     });
