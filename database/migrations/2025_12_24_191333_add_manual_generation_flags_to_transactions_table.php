@@ -12,9 +12,9 @@ return new class extends Migration {
     {
         Schema::table('transactions', function (Blueprint $table) {
             // Flag para marcar transações geradas manualmente via "Gerar Agora"
-            $table->boolean('generated_manually')->default(false)->after('recurring_transaction_id');
+            $table->boolean('generated_manually')->default(false);
             // Flag para marcar transações que são duplicatas intencionais no mesmo período
-            $table->boolean('duplicate_period')->default(false)->after('generated_manually');
+            $table->boolean('duplicate_period')->default(false);
         });
     }
 

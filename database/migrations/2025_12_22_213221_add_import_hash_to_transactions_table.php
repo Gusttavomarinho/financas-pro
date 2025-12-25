@@ -8,8 +8,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->string('import_hash', 32)->nullable()->after('notes');
-            $table->tinyInteger('import_hash_version')->nullable()->after('import_hash');
+            $table->string('import_hash', 32)->nullable();
+            $table->tinyInteger('import_hash_version')->nullable();
             $table->index('import_hash');
         });
     }

@@ -55,6 +55,7 @@ class FinancialInsightsService
         $previousEnd = $now->copy()->subDays(90);
 
         $currentData = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->where('type', 'despesa')
             ->where('date', '>=', $currentStart)
             ->select('category_id', DB::raw('SUM(value) as total'))
@@ -63,6 +64,7 @@ class FinancialInsightsService
             ->keyBy('category_id');
 
         $previousData = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->where('type', 'despesa')
             ->whereBetween('date', [$previousStart, $previousEnd])
             ->select('category_id', DB::raw('SUM(value) as total'))
@@ -123,6 +125,7 @@ class FinancialInsightsService
         // Vamos buscar tudo e agrupar no PHP para segurança e compatibilidade de banco.
         $transactions = Transaction::with('category')
             ->where('user_id', $userId)
+            ->includedInTotals()
             ->where('type', 'despesa')
             ->where('date', '>=', $start)
             ->get();
@@ -186,6 +189,7 @@ class FinancialInsightsService
 
         $transactions = Transaction::with('category')
             ->where('user_id', $userId)
+            ->includedInTotals()
             ->where('type', 'despesa')
             ->where('date', '>=', $start)
             ->get();
@@ -244,6 +248,7 @@ class FinancialInsightsService
         $start = Carbon::now()->subMonths(6)->startOfMonth();
 
         $monthlyStats = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->where('date', '>=', $start)
             ->get()
             ->groupBy(function ($t) {

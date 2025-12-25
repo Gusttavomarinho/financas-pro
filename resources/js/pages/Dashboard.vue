@@ -739,9 +739,9 @@ async function loadDashboardData() {
             periodEnd = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
         }
 
-        // Load accounts for total balance
+        // Load accounts for total balance (excluding accounts marked as "não considerar")
         await accountsStore.fetchAccounts();
-        stats.value.totalBalance = accountsStore.totalBalance;
+        stats.value.totalBalance = accountsStore.totalBalanceForCalculations;
 
         // Clear any existing filters before loading transactions for dashboard
         // (filters may persist from previous navigation to Transactions page)
@@ -750,15 +750,24 @@ async function loadDashboardData() {
         // Load transactions
         await transactionsStore.fetchTransactions();
         
-        // Filter transactions for selected period
+        // Get IDs of accounts that should be excluded from calculations
+        const excludedAccountIds = accountsStore.accounts
+            .filter(a => a.exclude_from_totals)
+            .map(a => a.id);
+        
+        // Filter transactions for selected period AND exclude accounts marked as "não considerar"
         const periodTransactions = transactionsStore.transactions.filter(t => {
-            return t.date >= periodStart && t.date <= periodEnd;
+            return t.date >= periodStart && 
+                   t.date <= periodEnd && 
+                   !excludedAccountIds.includes(t.account_id);
         });
 
-        // Recent transactions = transactions from the selected period
-        recentTransactions.value = periodTransactions.slice(0, 5);
+        // Recent transactions = transactions from the selected period (all accounts for visibility)
+        recentTransactions.value = transactionsStore.transactions
+            .filter(t => t.date >= periodStart && t.date <= periodEnd)
+            .slice(0, 5);
 
-        // Calculate period income/expenses
+        // Calculate period income/expenses (only from included accounts)
         stats.value.monthIncome = periodTransactions
             .filter(t => t.type === 'receita')
             .reduce((sum, t) => sum + parseFloat(t.value), 0);
@@ -776,9 +785,11 @@ async function loadDashboardData() {
             const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
             const prevPeriodEnd = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
 
-            // Filter transactions for previous month
+            // Filter transactions for previous month (also excluding accounts marked as "não considerar")
             const prevTransactions = transactionsStore.transactions.filter(t => {
-                return t.date >= prevPeriodStart && t.date <= prevPeriodEnd;
+                return t.date >= prevPeriodStart && 
+                       t.date <= prevPeriodEnd &&
+                       !excludedAccountIds.includes(t.account_id);
             });
 
             const prevIncome = prevTransactions

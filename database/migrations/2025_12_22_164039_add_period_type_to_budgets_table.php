@@ -14,7 +14,7 @@ return new class extends Migration {
         // Adicionar coluna period_type
         Schema::table('budgets', function (Blueprint $table) {
             // 'mensal' = YYYY-MM, 'anual' = YYYY
-            $table->string('period_type', 10)->default('mensal')->after('reference_month');
+            $table->string('period_type', 10)->default('mensal');
         });
 
         // SQLite não suporta drop index dentro de Schema::table

@@ -115,6 +115,7 @@ class AccountController extends Controller
             'account_number' => ['nullable', 'string', 'max:30'],
             'notes' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
+            'exclude_from_totals' => ['nullable', 'boolean'],
         ]);
 
         $oldData = $account->toArray();

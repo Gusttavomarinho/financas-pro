@@ -163,4 +163,15 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionAttachment::class);
     }
+
+    /**
+     * Escopo para transações de contas incluídas nos totais
+     * Filtra transações de contas marcadas como exclude_from_totals = true
+     */
+    public function scopeIncludedInTotals($query)
+    {
+        return $query->whereHas('account', function ($q) {
+            $q->where('exclude_from_totals', false);
+        });
+    }
 }

@@ -10,6 +10,14 @@ export const useAccountsStore = defineStore('accounts', () => {
 
     const totalBalance = computed(() => {
         return accounts.value
+            .filter(a => a.status === 'active')
+            .reduce((sum, a) => sum + parseFloat(a.current_balance || 0), 0);
+    });
+
+    // Saldo total EXCLUINDO contas marcadas como "não considerar nos cálculos"
+    // Usado pelo Dashboard e métricas
+    const totalBalanceForCalculations = computed(() => {
+        return accounts.value
             .filter(a => a.status === 'active' && !a.exclude_from_totals)
             .reduce((sum, a) => sum + parseFloat(a.current_balance || 0), 0);
     });
@@ -129,6 +137,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         currentAccount,
         loading,
         totalBalance,
+        totalBalanceForCalculations,
         fetchAccounts,
         fetchAccount,
         createAccount,

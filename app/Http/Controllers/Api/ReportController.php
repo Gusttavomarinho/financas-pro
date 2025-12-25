@@ -113,6 +113,7 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
         $query = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->with(['account', 'category', 'card']);
 
         // Apply filters (same as TransactionController)
@@ -163,7 +164,8 @@ class ReportController extends Controller
     private function getSummaryData(Request $request): array
     {
         $userId = Auth::id();
-        $query = Transaction::where('user_id', $userId);
+        $query = Transaction::where('user_id', $userId)
+            ->includedInTotals();
 
         // Apply date filters
         if ($request->filled('start_date')) {
@@ -273,6 +275,7 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
         $query = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->with('category');
 
         if ($request->filled('date_from')) {
@@ -310,6 +313,7 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
         $query = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->with('account');
 
         if ($request->filled('date_from')) {
@@ -347,7 +351,8 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
 
-        $query = Transaction::where('user_id', $userId);
+        $query = Transaction::where('user_id', $userId)
+            ->includedInTotals();
 
         if ($request->filled('date_from')) {
             $query->where('date', '>=', $request->date_from);
@@ -402,7 +407,8 @@ class ReportController extends Controller
     public function savingsRate(Request $request)
     {
         $userId = Auth::id();
-        $query = Transaction::where('user_id', $userId);
+        $query = Transaction::where('user_id', $userId)
+            ->includedInTotals();
 
         if ($request->filled('date_from')) {
             $query->where('date', '>=', $request->date_from);
@@ -435,6 +441,7 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
         $query = Transaction::where('user_id', $userId)
+            ->includedInTotals()
             ->where('type', 'despesa');
 
         if ($request->filled('date_from')) {
