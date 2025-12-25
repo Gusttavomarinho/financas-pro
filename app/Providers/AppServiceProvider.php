@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use App\Models\Transaction;
 use App\Models\CardInvoice;
 use App\Models\Card;
@@ -23,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         Transaction::observe(AuditObserver::class);
         Transaction::observe(\App\Observers\BudgetNotificationObserver::class);
         CardInvoice::observe(AuditObserver::class);
