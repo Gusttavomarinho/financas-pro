@@ -225,7 +225,7 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">Limites de gasto por tipo de despesa</p>
                 </div>
                 <button @click="openCreateModal" class="btn-secondary btn-sm">
-                    + Nova Categoria
+                    + Novo Orçamento
                 </button>
             </div>
 
@@ -1205,10 +1205,12 @@ function setPeriodType(type) {
 }
 
 async function loadData() {
-    budgetsStore.setPeriod(currentBudgetPeriodString.value, periodType.value);
+    // For API calls, 'todos' is treated as 'mensal' since category budgets are monthly
+    const apiPeriodType = periodType.value === 'todos' ? 'mensal' : periodType.value;
+    budgetsStore.setPeriod(currentBudgetPeriodString.value, apiPeriodType);
     await Promise.all([
-        budgetsStore.fetchBudgets(currentBudgetPeriodString.value, periodType.value),
-        budgetsStore.fetchSummary(currentBudgetPeriodString.value, periodType.value),
+        budgetsStore.fetchBudgets(currentBudgetPeriodString.value, apiPeriodType),
+        budgetsStore.fetchSummary(currentBudgetPeriodString.value, apiPeriodType),
         categoriesStore.fetchCategories(),
     ]);
 }
