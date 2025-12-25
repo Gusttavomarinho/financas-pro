@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use Carbon\Carbon;
 
 class NotificationService
 {
@@ -86,15 +87,17 @@ class NotificationService
     /**
      * Create recurring generated notification.
      */
-    public function notifyRecurringGenerated(int $userId, string $description, float $value): Notification
+    public function notifyRecurringGenerated(int $userId, string $description, float $value, ?string $date = null): Notification
     {
         $formattedValue = number_format($value, 2, ',', '.');
+        $dateStr = $date ? " para " . Carbon::parse($date)->format('d/m/Y') : "";
+
         return $this->create(
             $userId,
             Notification::TYPE_RECURRING_GENERATED,
             'Recorrência gerada',
-            "Recorrência '{$description}' gerada (R$ {$formattedValue}).",
-            ['description' => $description, 'value' => $value]
+            "Recorrência '{$description}' gerada{$dateStr} (R$ {$formattedValue}).",
+            ['description' => $description, 'value' => $value, 'date' => $date]
         );
     }
 

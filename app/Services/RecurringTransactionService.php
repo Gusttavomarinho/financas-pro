@@ -35,7 +35,8 @@ class RecurringTransactionService
                 $this->notificationService->notifyRecurringGenerated(
                     $recurring->user_id,
                     $recurring->description,
-                    $recurring->value
+                    $recurring->value,
+                    $transaction->date instanceof \Carbon\Carbon ? $transaction->date->format('Y-m-d') : $transaction->date
                 );
 
                 $count++;

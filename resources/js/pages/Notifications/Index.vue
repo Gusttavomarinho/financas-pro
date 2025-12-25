@@ -99,6 +99,15 @@ function formatDate(dateString) {
     const now = new Date();
     const diff = now - date;
     
+    // Future date or invalid
+    if (diff < 0) {
+        return date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+    
     // Less than 1 minute
     if (diff < 60000) return 'Agora mesmo';
     
