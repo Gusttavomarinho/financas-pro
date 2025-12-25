@@ -66,7 +66,9 @@ export const useBudgetsStore = defineStore('budgets', {
 
         async createBudget(data, periodType = null) {
             const uiStore = useUiStore();
-            const type = periodType || this.periodType;
+            // Convert 'todos' to 'mensal' since backend only accepts 'mensal' or 'anual'
+            let type = periodType || this.periodType;
+            if (type === 'todos') type = 'mensal';
             try {
                 const response = await axios.post('/api/budgets', {
                     ...data,
