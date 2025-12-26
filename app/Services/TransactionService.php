@@ -138,6 +138,21 @@ class TransactionService
                 $this->installmentService->removeInstallments($transaction);
             }
 
+            // Criar transação de estorno visível para o usuário
+            Transaction::create([
+                'user_id' => $transaction->user_id,
+                'account_id' => $transaction->account_id,
+                'card_id' => $transaction->card_id,
+                'category_id' => $transaction->category_id,
+                'type' => 'estorno',
+                'value' => $transaction->value,
+                'description' => "Estorno Total: {$transaction->description}",
+                'date' => now()->toDateString(),
+                'payment_method' => $transaction->payment_method,
+                'status' => 'confirmada',
+                'notes' => "Estorno da transação #{$transaction->id}",
+            ]);
+
             // Marcar transação como estornada
             $transaction->update(['status' => 'estornada']);
 

@@ -167,11 +167,18 @@ class Transaction extends Model
     /**
      * Escopo para transações de contas incluídas nos totais
      * Filtra transações de contas marcadas como exclude_from_totals = true
+     * Transações sem account (ex: compras no crédito) são incluídas por padrão
      */
     public function scopeIncludedInTotals($query)
     {
-        return $query->whereHas('account', function ($q) {
-            $q->where('exclude_from_totals', false);
+        return $query->where(function ($q) {
+            // Include transactions that either:
+            // 1. Have no account (null account_id) - include these by default
+            // 2. Have an account that is NOT excluded from totals
+            $q->whereNull('account_id')
+                ->orWhereHas('account', function ($accountQuery) {
+                    $accountQuery->where('exclude_from_totals', false);
+                });
         });
     }
 }

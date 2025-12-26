@@ -446,36 +446,64 @@ const invoicePreviewMonth = computed(() => {
     let invoiceMonth = referenceDate.getMonth();
     let invoiceYear = referenceDate.getFullYear();
     
-    // If reference date is ON or AFTER closing day, the purchase goes to next month's invoice
-    // The invoice that closes in month X typically is due (vence) in month X+1
-    // So we add 1 to get the due month
+    // Logic for determining the invoice month based on Brazilian credit card rules:
+    // - A purchase made BEFORE closing day X goes to invoice that CLOSES in that month
+    // - A purchase made ON or AFTER closing day goes to invoice that CLOSES next month
+    // - The invoice that CLOSES in month X is DUE (vence) in month X or X+1 depending on dueDay vs closingDay
+    
+    // Step 1: Determine which month's invoice this purchase would go to based on closing
+    // If after closing day, purchase goes to next month's closing
     if (referenceDate.getDate() >= closingDay) {
-        invoiceMonth++;
+        invoiceMonth++; // Goes to next month's invoice (that will close in next month)
     }
     
-    // IMPORTANT: When current_installment > 1 (ongoing installment), we need to check
-    // if the invoice for that calculated month has already PASSED its due date.
-    // If today > due_day of the invoice month, that invoice is no longer open, 
-    // so the actual current open invoice is the NEXT month.
+    // For the "vence em" display, we need to calculate when this invoice is DUE
+    // Typically: if dueDay > closingDay, due is same month as closing. Otherwise due is next month.
+    // But simplification: the invoice reference_month is the DUE month
+    // So if purchase goes to invoice that CLOSES in month X:
+    //   - If dueDay < closingDay: that invoice is DUE in month X+1
+    //   - If dueDay > closingDay: that invoice is DUE in month X
+    // For simplicity, since Brazilian cards usually have due in next month, let's add 1
+    invoiceMonth++; // Due month is typically closing month + 1
+    
+    // IMPORTANT: When current_installment > 1 (ongoing installment), the purchase
+    // should go to the current OPEN invoice. An invoice is CLOSED after its closing_day.
+    // If today is PAST the closing day of the invoice we calculated, that invoice is CLOSED.
     if (form.current_installment > 1) {
-        // Check if the calculated invoice due date has already passed
-        // Invoice month is calculated, let's see if today is past its due
-        let tempInvoiceMonth = invoiceMonth;
-        let tempInvoiceYear = invoiceYear;
+        // We calculated the due month, now check if that invoice's closing has already passed
+        // The invoice due in month X closes in month X-1 (or X if dueDay > closingDay)
+        // For simplicity: check if today's date is after the closing day of the previous month
         
-        // Normalize first to get correct month/year
-        if (tempInvoiceMonth > 11) {
-            tempInvoiceYear += Math.floor(tempInvoiceMonth / 12);
-            tempInvoiceMonth = tempInvoiceMonth % 12;
+        // The invoice we calculated is DUE in invoiceMonth
+        // Its closing date was in the previous month on closingDay
+        // If today > that closing date, the invoice is closed
+        
+        // Example: Today is Dec 26, card closes 25, we calculated January invoice
+        // January invoice CLOSED on Dec 25. Today (Dec 26) > Dec 25, so January is CLOSED
+        // The actual open invoice is February
+        
+        // Calculate the closing date of the invoice we calculated
+        // Closing month = due month - 1 (typically)
+        let closingMonth = invoiceMonth - 1;
+        let closingYear = invoiceYear;
+        
+        // Normalize
+        if (closingMonth > 11) {
+            closingYear += Math.floor(closingMonth / 12);
+            closingMonth = closingMonth % 12;
+        }
+        if (closingMonth < 0) {
+            closingYear--;
+            closingMonth = 11;
         }
         
-        // Calculate due date of this invoice
-        const daysInMonth = new Date(tempInvoiceYear, tempInvoiceMonth + 1, 0).getDate();
-        const effectiveDueDay = Math.min(dueDay, daysInMonth);
-        const invoiceDueDate = new Date(tempInvoiceYear, tempInvoiceMonth, effectiveDueDay);
+        // Calculate actual closing date
+        const daysInClosingMonth = new Date(closingYear, closingMonth + 1, 0).getDate();
+        const effectiveClosingDay = Math.min(closingDay, daysInClosingMonth);
+        const invoiceClosingDate = new Date(closingYear, closingMonth, effectiveClosingDay);
         
-        // If today is after the due date, the current open invoice is actually next month
-        if (referenceDate > invoiceDueDate) {
+        // If today is after the closing date, this invoice is CLOSED, move to next
+        if (referenceDate > invoiceClosingDate) {
             invoiceMonth++;
         }
     }
