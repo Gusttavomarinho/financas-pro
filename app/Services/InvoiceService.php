@@ -261,7 +261,7 @@ class InvoiceService
         // Se o pagamento cobre o total da fatura, marca todas as parcelas como pagas
         // Isso inclui 'antecipada' porque essas parcelas também consomem limite
         if ($invoice->paid_value >= $invoice->total_value) {
-            CardInstallment::where('invoice_id', $invoice->id)
+            CardInstallment::where('card_invoice_id', $invoice->id)
                 ->whereNotIn('status', ['paga', 'estornada'])
                 ->update(['status' => 'paga']);
         }

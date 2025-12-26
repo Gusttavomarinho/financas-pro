@@ -224,15 +224,17 @@ class BackupExportService
         $cardIds = Card::where('user_id', $userId)->pluck('id');
         $invoiceIds = CardInvoice::whereIn('card_id', $cardIds)->pluck('id');
 
-        return CardInstallment::whereIn('invoice_id', $invoiceIds)
+        return CardInstallment::whereIn('card_invoice_id', $invoiceIds)
             ->get()
             ->map(fn($i) => [
                 'id' => $i->id,
                 'transaction_id' => $i->transaction_id,
-                'invoice_id' => $i->invoice_id,
+                'card_invoice_id' => $i->card_invoice_id,
                 'installment_number' => $i->installment_number,
                 'total_installments' => $i->total_installments,
-                'amount' => $i->amount,
+                'value' => $i->value,
+                'due_date' => $i->due_date,
+                'status' => $i->status,
                 'created_at' => $i->created_at?->toIso8601String(),
             ])
             ->toArray();

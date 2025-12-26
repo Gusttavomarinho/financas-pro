@@ -140,7 +140,7 @@ class BackupImportService
         $cardIds = Card::where('user_id', $userId)->pluck('id');
         $invoiceIds = CardInvoice::whereIn('card_id', $cardIds)->pluck('id');
 
-        CardInstallment::whereIn('invoice_id', $invoiceIds)->delete();
+        CardInstallment::whereIn('card_invoice_id', $invoiceIds)->delete();
         CardInvoice::whereIn('card_id', $cardIds)->delete();
         Transaction::where('user_id', $userId)->delete();
         RecurringTransaction::where('user_id', $userId)->delete();
@@ -313,9 +313,10 @@ class BackupImportService
     private function importInstallments(array $installments): void
     {
         foreach ($installments as $data) {
-            $oldInvoiceId = $data['invoice_id'];
+            // Support both old (invoice_id) and new (card_invoice_id) backup format
+            $oldInvoiceId = $data['card_invoice_id'] ?? $data['invoice_id'] ?? null;
             $oldTransactionId = $data['transaction_id'];
-            unset($data['id'], $data['created_at']);
+            unset($data['id'], $data['created_at'], $data['invoice_id'], $data['card_invoice_id']);
 
             $newInvoiceId = $this->idMaps['invoices'][$oldInvoiceId] ?? null;
             $newTransactionId = $this->idMaps['transactions'][$oldTransactionId] ?? null;
@@ -325,7 +326,7 @@ class BackupImportService
 
             CardInstallment::create([
                 ...$data,
-                'invoice_id' => $newInvoiceId,
+                'card_invoice_id' => $newInvoiceId,
                 'transaction_id' => $newTransactionId,
             ]);
         }

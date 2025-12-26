@@ -354,7 +354,7 @@ class FinancialInsightsService
         // 5. Reserva/Meta (15pts)
         // Verificar se tem Objetivos (Goals) em progresso
         $hasGoals = \App\Models\Goal::where('user_id', Auth::id())
-            ->where('status', 'in_progress')
+            ->where('status', 'em_andamento')
             ->exists();
         $goalsScore = $hasGoals ? 15 : 5;
 
