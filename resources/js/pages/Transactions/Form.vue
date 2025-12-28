@@ -113,6 +113,7 @@
                                 type="date"
                                 required
                                 class="input"
+                                @change="updateStatusFromDate"
                             />
                         </div>
                         <div>
@@ -124,6 +125,42 @@
                                 class="input"
                             />
                         </div>
+                    </div>
+
+                    <!-- Status Toggle (Pago/Pendente) -->
+                    <div v-if="form.type !== 'transferencia' && form.payment_method !== 'credito'">
+                        <label class="label">Status</label>
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                @click="form.status = 'confirmada'"
+                                :class="[
+                                    'flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors flex items-center justify-center gap-2',
+                                    form.status === 'confirmada'
+                                        ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-400'
+                                ]"
+                            >
+                                <span class="text-lg">👍</span>
+                                <span>{{ form.type === 'receita' ? 'Recebido' : 'Pago' }}</span>
+                            </button>
+                            <button
+                                type="button"
+                                @click="form.status = 'pendente'"
+                                :class="[
+                                    'flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors flex items-center justify-center gap-2',
+                                    form.status === 'pendente'
+                                        ? 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-400'
+                                ]"
+                            >
+                                <span class="text-lg">👎</span>
+                                <span>Pendente</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            💡 Status auto-definido pela data. Data de hoje = pago/recebido.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -403,7 +440,17 @@ const form = reactive({
     installments: 1,
     current_installment: 1, // Para parcelamentos em andamento
     notes: '',
+    status: 'confirmada', // Auto-definido baseado na data
 });
+
+// Atualiza status automaticamente baseado na data selecionada
+function updateStatusFromDate() {
+    if (form.date === today) {
+        form.status = 'confirmada';
+    } else {
+        form.status = 'pendente';
+    }
+}
 
 // Filtrar categorias por tipo
 const incomeCategories = computed(() => {

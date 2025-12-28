@@ -7,9 +7,9 @@
                 <p class="text-gray-500 dark:text-gray-400">Todas as suas transações</p>
             </div>
             <!-- Actions Container with improved spacing -->
-            <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide pr-6">
+            <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                 <!-- Export Button (Triggers Modal) -->
-                <button @click="showExportModal = true" class="btn-secondary flex items-center gap-2 link-shrink-0 whitespace-nowrap" :disabled="exporting">
+                <button @click="showExportModal = true" class="btn-secondary flex items-center gap-2 flex-shrink-0 whitespace-nowrap" :disabled="exporting">
                     <svg v-if="exporting" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -78,7 +78,15 @@
                     <label class="label">Data final</label>
                     <input type="date" v-model="transactionsStore.filters.date_to" class="input w-full" />
                 </div>
-                <div class="sm:col-span-2 lg:col-span-3 xl:col-span-6">
+                <div>
+                    <label class="label">Status</label>
+                    <select v-model="transactionsStore.filters.status" class="input w-full">
+                        <option value="">Todos</option>
+                        <option value="confirmada">Pagos/Recebidos</option>
+                        <option value="pendente">Pendentes</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2 lg:col-span-3 xl:col-span-5">
                     <label class="label">Buscar</label>
                     <input
                         type="text"
@@ -118,6 +126,7 @@
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-center py-3 px-2 text-sm font-medium text-gray-500" title="Status"></th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Data</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Descrição</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Categoria</th>
@@ -133,6 +142,25 @@
                             class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                             @click="openTransactionDetail(transaction)"
                         >
+                            <!-- Status Toggle -->
+                            <td class="py-3 px-2 text-center" @click.stop>
+                                <button
+                                    v-if="transaction.type !== 'transferencia' && transaction.payment_method !== 'credito'"
+                                    @click="handleToggleStatus(transaction)"
+                                    :class="[
+                                        'w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110',
+                                        transaction.status === 'confirmada'
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
+                                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600'
+                                    ]"
+                                    :title="transaction.status === 'confirmada' 
+                                        ? (transaction.type === 'receita' ? 'Recebido - Clique para marcar como pendente' : 'Pago - Clique para marcar como pendente') 
+                                        : 'Pendente - Clique para marcar como pago/recebido'"
+                                >
+                                    <span class="text-sm">{{ transaction.status === 'confirmada' ? '👍' : '👎' }}</span>
+                                </button>
+                                <span v-else class="text-gray-400 text-sm">—</span>
+                            </td>
                             <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                                 {{ formatDate(transaction.date) }}
                             </td>
@@ -794,6 +822,10 @@ function openDeleteConfirm(transaction) {
 function openAnticipateModal(transaction) {
     transactionToAnticipate.value = transaction;
     showAnticipateModal.value = true;
+}
+
+async function handleToggleStatus(transaction) {
+    await transactionsStore.toggleStatus(transaction.id);
 }
 
 // Helper functions to open action modals from detail modal
