@@ -14,7 +14,7 @@
                         <button 
                             @click="setPeriod('this_month')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
                                 isPeriodActive('this_month') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
@@ -25,7 +25,7 @@
                         <button 
                             @click="setPeriod('last_30')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
                                 isPeriodActive('last_30') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
@@ -36,7 +36,7 @@
                         <button 
                             @click="setPeriod('this_year')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
                                 isPeriodActive('this_year') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
@@ -145,7 +145,7 @@
                     :key="tab.id"
                     @click="activeTab = tab.id"
                     :class="[
-                        'flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                        'flex-1 sm:flex-none px-4 sm:px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
                         activeTab === tab.id
                             ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
@@ -159,7 +159,7 @@
         <!-- Overview Tab -->
         <div v-if="activeTab === 'overview'" class="space-y-6">
             <!-- KPI Row -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Savings Rate KPI -->
                 <SavingsRate :filters="filters" />
                 
