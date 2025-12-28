@@ -60,6 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('transactions/{transaction}/anticipate', [TransactionController::class, 'anticipate']);
     Route::post('transactions/{transaction}/refund-by-value', [TransactionController::class, 'refundByValue']);
     Route::patch('transactions/{transaction}/notes', [TransactionController::class, 'updateNotes']);
+    Route::patch('transactions/{transaction}/toggle-status', [TransactionController::class, 'toggleStatus']);
+    Route::get('transactions/pending-summary', [TransactionController::class, 'pendingSummary']);
 
     // Attachments
     Route::get('transactions/{transaction}/attachments', [TransactionAttachmentController::class, 'index']);

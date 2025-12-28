@@ -174,12 +174,22 @@ class TransactionController extends Controller
         }
 
         // Transação simples (receita/despesa em conta)
+        // Auto-definir status baseado na data
+        $transactionDate = $validated['date'];
+        $today = now()->toDateString();
+
+        // Se usuário especificou status explícito, usar. Senão, auto-definir
+        $status = $request->input('status');
+        if (!$status || !in_array($status, ['pendente', 'confirmada'])) {
+            $status = ($transactionDate === $today) ? 'confirmada' : 'pendente';
+        }
+
         $transaction = Transaction::create([
             ...$validated,
             'user_id' => $userId,
             'total_installments' => 1,
             'affects_balance' => true,
-            'status' => 'confirmada',
+            'status' => $status,
         ]);
 
 
@@ -448,6 +458,71 @@ class TransactionController extends Controller
         return response()->json([
             'message' => 'Observações atualizadas!',
             'data' => $transaction->fresh(),
+        ]);
+    }
+
+    /**
+     * Alterna status entre pendente e confirmada
+     */
+    public function toggleStatus(Request $request, Transaction $transaction): JsonResponse
+    {
+        if ($transaction->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Não autorizado.'], 403);
+        }
+
+        // Não permitir toggle de transações estornadas ou canceladas
+        if (in_array($transaction->status, ['estornada', 'cancelada'])) {
+            return response()->json([
+                'message' => 'Não é possível alterar o status de transações estornadas ou canceladas.',
+            ], 422);
+        }
+
+        // Alternar status
+        $newStatus = $transaction->status === 'pendente' ? 'confirmada' : 'pendente';
+        $transaction->update(['status' => $newStatus]);
+
+        $statusLabel = $newStatus === 'confirmada'
+            ? ($transaction->type === 'receita' ? 'recebida' : 'paga')
+            : 'pendente';
+
+        return response()->json([
+            'message' => "Transação marcada como {$statusLabel}!",
+            'data' => $transaction->fresh(),
+        ]);
+    }
+
+    /**
+     * Retorna resumo de transações pendentes
+     */
+    public function pendingSummary(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        $pendingExpenses = Transaction::where('user_id', $userId)
+            ->where('status', 'pendente')
+            ->where('type', 'despesa')
+            ->sum('value');
+
+        $pendingIncome = Transaction::where('user_id', $userId)
+            ->where('status', 'pendente')
+            ->where('type', 'receita')
+            ->sum('value');
+
+        $pendingExpensesCount = Transaction::where('user_id', $userId)
+            ->where('status', 'pendente')
+            ->where('type', 'despesa')
+            ->count();
+
+        $pendingIncomeCount = Transaction::where('user_id', $userId)
+            ->where('status', 'pendente')
+            ->where('type', 'receita')
+            ->count();
+
+        return response()->json([
+            'pending_expenses' => (float) $pendingExpenses,
+            'pending_income' => (float) $pendingIncome,
+            'pending_expenses_count' => $pendingExpensesCount,
+            'pending_income_count' => $pendingIncomeCount,
         ]);
     }
 }

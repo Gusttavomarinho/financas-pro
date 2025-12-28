@@ -21,6 +21,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         date_from: '',
         date_to: '',
         search: '',
+        status: '', // pendente, confirmada
     });
 
     async function fetchTransactions(page = 1) {
@@ -302,7 +303,35 @@ export const useTransactionsStore = defineStore('transactions', () => {
             date_from: '',
             date_to: '',
             search: '',
+            status: '',
         };
+    }
+
+    async function toggleStatus(id) {
+        const uiStore = useUiStore();
+        try {
+            const response = await axios.patch(`/api/transactions/${id}/toggle-status`);
+            const index = transactions.value.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactions.value[index] = response.data.data;
+            }
+            uiStore.showToast(response.data.message, 'success');
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Erro ao alterar status';
+            uiStore.showToast(message, 'error');
+            return { success: false };
+        }
+    }
+
+    async function fetchPendingSummary() {
+        try {
+            const response = await axios.get('/api/transactions/pending-summary');
+            return response.data;
+        } catch (error) {
+            console.error('Erro ao buscar resumo de pendentes', error);
+            return null;
+        }
     }
 
     return {
@@ -327,5 +356,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         downloadAttachment,
         setFilters,
         clearFilters,
+        toggleStatus,
+        fetchPendingSummary,
     };
 });
