@@ -667,3 +667,64 @@ body.dark {
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
+
+/* ========================================
+   SCROLLBAR UTILITIES FOR MOBILE
+   ======================================== */
+/* Hide scrollbar on mobile but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Thin scrollbar for horizontal scroll areas */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+}
+
+.dark .scrollbar-thin {
+    scrollbar-color: #475569 transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Snap scroll for mobile */
+.snap-x {
+    scroll-snap-type: x mandatory;
+}
+
+.snap-mandatory {
+    scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+    scroll-snap-align: start;
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 640px) {
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+}

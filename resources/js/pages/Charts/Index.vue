@@ -8,16 +8,16 @@
                     <p class="text-gray-500 dark:text-gray-400">Análise financeira avançada</p>
                 </div>
                 
-                <!-- Global Period Selector - same style as Budgets -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto overflow-x-auto scrollbar-hide">
+                <!-- Period Selector - Mobile Optimized -->
+                <div class="w-full">
+                    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1">
                         <button 
                             @click="setPeriod('this_month')"
                             :class="[
-                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                                'flex-1 px-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors text-center',
                                 isPeriodActive('this_month') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             ]"
                         >
                             Este Mês
@@ -25,21 +25,22 @@
                         <button 
                             @click="setPeriod('last_30')"
                             :class="[
-                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                                'flex-1 px-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors text-center',
                                 isPeriodActive('last_30') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             ]"
                         >
-                            Últimos 30 dias
+                            <span class="hidden sm:inline">Últimos 30 dias</span>
+                            <span class="sm:hidden">30 dias</span>
                         </button>
                         <button 
                             @click="setPeriod('this_year')"
                             :class="[
-                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                                'flex-1 px-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors text-center',
                                 isPeriodActive('this_year') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             ]"
                         >
                             Este Ano
@@ -137,21 +138,22 @@
              </div>
         </div>
 
-        <!-- Section Tabs - same style as Budgets period toggle -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-            <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto overflow-x-auto">
+        <!-- Section Tabs - Mobile Grid Layout -->
+        <div class="w-full mb-6">
+            <div class="grid grid-cols-5 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1">
                 <button 
                     v-for="tab in tabs" 
                     :key="tab.id"
                     @click="activeTab = tab.id"
                     :class="[
-                        'flex-1 sm:flex-none px-4 sm:px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                        'px-1 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors text-center truncate',
                         activeTab === tab.id
                             ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                     ]"
                 >
-                    {{ tab.name }}
+                    <span class="hidden sm:inline">{{ tab.name }}</span>
+                    <span class="sm:hidden">{{ tab.shortName }}</span>
                 </button>
             </div>
         </div>
@@ -289,11 +291,11 @@ const showAdvancedFilters = ref(false);
 const activeTab = ref('overview');
 
 const tabs = [
-    { id: 'overview', name: 'Visão Geral' },
-    { id: 'expenses', name: 'Despesas' },
-    { id: 'income', name: 'Receitas' },
-    { id: 'credit', name: 'Crédito' }, // Future
-    { id: 'planning', name: 'Planejamento' }, // Future
+    { id: 'overview', name: 'Visão Geral', shortName: 'Geral' },
+    { id: 'expenses', name: 'Despesas', shortName: 'Desp.' },
+    { id: 'income', name: 'Receitas', shortName: 'Rec.' },
+    { id: 'credit', name: 'Crédito', shortName: 'Créd.' },
+    { id: 'planning', name: 'Planejamento', shortName: 'Plan.' },
 ];
 
 // Define reactive filters object with new fields
