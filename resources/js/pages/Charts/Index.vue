@@ -10,11 +10,11 @@
                 
                 <!-- Global Period Selector - same style as Budgets -->
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto">
+                    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto overflow-x-auto scrollbar-hide">
                         <button 
                             @click="setPeriod('this_month')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
                                 isPeriodActive('this_month') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
@@ -25,7 +25,7 @@
                         <button 
                             @click="setPeriod('last_30')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
                                 isPeriodActive('last_30') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
@@ -36,7 +36,7 @@
                         <button 
                             @click="setPeriod('this_year')"
                             :class="[
-                                'flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'flex-shrink-0 sm:flex-shrink px-3 py-2 sm:py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
                                 isPeriodActive('this_year') 
                                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700'
